@@ -1,7 +1,7 @@
 import streamlit as st
 import base64
 
-st.title("🎚️ FluxTape — Lyrics Versions on One Timeline")
+st.title("FluxTape — Lyrics Versions")
 
 # Audio files (relative paths — must be in same folder as this script)
 audio_files = {
