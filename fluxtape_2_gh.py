@@ -44,7 +44,7 @@ html = f"""
     font-size: 28px;
     cursor: pointer;
     color: #fff;
-    background: #4CAF50; /* green default */
+    background: #4CAF50; /* purple default */
     transition: background 0.25s ease, transform 0.1s ease;
   }}
   .play-btn:hover {{ transform: scale(1.05); }}
