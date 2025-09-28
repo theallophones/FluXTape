@@ -36,7 +36,7 @@ html = f"""
 </div>
 
 <div style="margin-top:12px; text-align:center;">
-  <span id="active" style="font-weight:500; opacity:0.8;"></span>
+  <span id="active" style="font-weight:500; color:#ffffff;"></span>
 </div>
 
 <style>
