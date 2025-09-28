@@ -16,14 +16,14 @@ def file_to_data_url(path, mime="audio/mpeg"):
 audio_map = {k: file_to_data_url(v) for k, v in audio_files.items()}
 
 html = f"""
-<div style="text-align:center; margin-bottom:20px;">
-  <h2 style="font-family:sans-serif; font-weight:700; color:#ffffff; margin-bottom:20px;">
+<div style="text-align:center; margin-bottom:10px;">
+  <h2 style="font-family:sans-serif; font-weight:700; color:#ffffff; margin-bottom:15px;">
     FluxTape — Lyrics Versions
   </h2>
   <button id="playBtn" class="play-btn">▶</button>
 </div>
 
-<div id="waveform" style="margin-top:20px;"></div>
+<div id="waveform" style="margin:25px auto;"></div>
 
 <!-- Knob + orbiting labels -->
 <div class="knob-wrap">
@@ -36,7 +36,7 @@ html = f"""
   <div class="label labelC" data-idx="2">Lyrics C</div>
 </div>
 
-<div style="margin-top:14px; text-align:center;">
+<div style="margin-top:16px; text-align:center;">
   <span id="active" style="font-weight:600; color:#ffffff; font-size:16px;"></span>
 </div>
 
@@ -49,35 +49,33 @@ html = f"""
   body {{ background: var(--bg); }}
 
   .play-btn {{
-    width: 78px;
-    height: 78px;
+    width: 82px;
+    height: 82px;
     border-radius: 50%;
     border: none;
-    font-size: 30px;
+    font-size: 34px;
     cursor: pointer;
     color: #fff;
     background: var(--accent);
-    transition: background 0.25s ease, transform 0.1s ease, box-shadow .2s ease;
-    box-shadow: 0 6px 18px rgba(76,175,80,.35);
+    transition: background 0.25s ease, transform 0.2s ease, box-shadow .3s ease;
+    box-shadow: 0 6px 20px rgba(76,175,80,.4);
   }}
-  .play-btn:hover {{ transform: scale(1.05); }}
+  .play-btn:hover {{ transform: scale(1.1); }}
   .play-btn.pause {{
     background: #FBC02D;
-    box-shadow: 0 6px 18px rgba(251,192,45,.35);
+    box-shadow: 0 6px 20px rgba(251,192,45,.4);
   }}
 
-  /* Knob container */
   .knob-wrap {{
     position: relative;
     width: 260px;
     height: 260px;
-    margin: 40px auto;
+    margin: 30px auto;
     display: flex;
     align-items: center;
     justify-content: center;
   }}
 
-  /* Knob itself */
   .knob {{
     width: 160px;
     height: 160px;
@@ -88,8 +86,8 @@ html = f"""
     border: 1px solid #2e3440;
   }}
   .center-dot {{
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     background: #cfd8dc;
     position: absolute;
@@ -108,29 +106,30 @@ html = f"""
     left: 50%;
     translate: -50% 0;
     box-shadow: 0 0 8px rgba(255,255,255,.35);
+    transition: transform 0.4s ease; /* smooth motion */
   }}
 
-  /* Orbiting labels */
   .label {{
     position: absolute;
     background: #2a2f3a;
     color: var(--text);
-    padding: 6px 12px;
-    border-radius: 12px;
+    padding: 7px 14px;
+    border-radius: 14px;
     font-family: sans-serif;
     font-size: 14px;
     cursor: pointer;
-    transition: background .2s ease, box-shadow .2s ease;
+    transition: background .25s ease, box-shadow .25s ease;
   }}
   .label:hover {{ background: #3a4150; }}
   .label.active {{
     background: #b71c1c;
-    box-shadow: 0 0 0 2px #ffebee inset;
+    box-shadow: 0 0 14px rgba(183,28,28,0.9);
   }}
 
-  .labelA {{ top: 50%; left: -60px; transform: translateY(-50%); }}  /* 3 o’clock */
-  .labelB {{ top: -10px; left: 50%; transform: translateX(-50%); }} /* 12 o’clock */
-  .labelC {{ top: 50%; right: -60px; transform: translateY(-50%); }}  /* 9 o’clock */
+  /* Positions: A=9pm, B=12, C=3pm */
+  .labelA {{ top: 50%; left: -65px; transform: translateY(-50%); }}
+  .labelB {{ top: -20px; left: 50%; transform: translateX(-50%); }}
+  .labelC {{ top: 50%; right: -65px; transform: translateY(-50%); }}
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
@@ -138,12 +137,12 @@ html = f"""
 <script>
   const audioMap = {audio_map};
   const labels = ["A","B","C"];
-  const angles = [270, 0, 90]; // 0=A top, 1=B right, 2=C left
+  const angles = [270, 0, 90]; // A=left, B=top, C=right
 
   const ws = WaveSurfer.create({{
     container: '#waveform',
-    waveColor: '#c9cbd3',
-    progressColor: '#5f6bff',
+    waveColor: '#00e5ff',
+    progressColor: '#ff4081',
     height: 160,
     backend: 'WebAudio',
     cursorWidth: 2,
@@ -208,4 +207,4 @@ html = f"""
 </script>
 """
 
-st.components.v1.html(html, height=600)
+st.components.v1.html(html, height=640)
