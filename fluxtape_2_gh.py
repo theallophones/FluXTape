@@ -25,15 +25,15 @@ html = f"""
 
 <div id="waveform" style="margin-top:20px;"></div>
 
-<!-- Knob + circular labels -->
-<div class="knob-container">
+<!-- Knob + orbiting labels -->
+<div class="knob-wrap">
   <div id="knob" class="knob" title="Click to switch Lyrics version">
     <div id="pointer" class="pointer"></div>
     <div class="center-dot"></div>
-    <div class="label labelA" data-idx="0">Lyrics A</div>
-    <div class="label labelB" data-idx="1">Lyrics B</div>
-    <div class="label labelC" data-idx="2">Lyrics C</div>
   </div>
+  <div class="label labelA" data-idx="0">Lyrics A</div>
+  <div class="label labelB" data-idx="1">Lyrics B</div>
+  <div class="label labelC" data-idx="2">Lyrics C</div>
 </div>
 
 <div style="margin-top:14px; text-align:center;">
@@ -66,15 +66,21 @@ html = f"""
     box-shadow: 0 6px 18px rgba(251,192,45,.35);
   }}
 
-  /* Knob + circular layout */
-  .knob-container {{
-    display: grid;
-    place-items: center;
-    margin-top: 40px;
+  /* Knob container */
+  .knob-wrap {{
+    position: relative;
+    width: 260px;   /* enough space for knob + orbit */
+    height: 260px;
+    margin: 40px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }}
+
+  /* Knob itself */
   .knob {{
-    width: 180px;
-    height: 180px;
+    width: 160px;
+    height: 160px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #2b313c, #1b1f27 70%);
     position: relative;
@@ -94,7 +100,7 @@ html = f"""
   .pointer {{
     position: absolute;
     width: 4px;
-    height: 60px;
+    height: 55px;
     background: #ffffff;
     border-radius: 2px;
     transform-origin: bottom center;
@@ -104,7 +110,7 @@ html = f"""
     box-shadow: 0 0 8px rgba(255,255,255,.35);
   }}
 
-  /* Labels around knob */
+  /* Orbiting labels */
   .label {{
     position: absolute;
     background: #2a2f3a;
@@ -121,9 +127,10 @@ html = f"""
     background: #b71c1c;
     box-shadow: 0 0 0 2px #ffebee inset;
   }}
-  .labelA {{ top: 10%; left: 50%; transform: translate(-50%, -50%); }}   /* 12 o'clock */
-  .labelB {{ right: -10%; top: 50%; transform: translate(0, -50%); }}   /* 3 o'clock */
-  .labelC {{ left: -10%; top: 50%; transform: translate(0, -50%); }}    /* 9 o'clock */
+
+  .labelA {{ top: -10px; left: 50%; transform: translateX(-50%); }}  /* 12 o’clock */
+  .labelB {{ top: 50%; right: -10px; transform: translateY(-50%); }} /* 3 o’clock */
+  .labelC {{ top: 50%; left: -10px; transform: translateY(-50%); }}  /* 9 o’clock */
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
@@ -133,7 +140,6 @@ html = f"""
   const labels = ["A","B","C"];
   const angles = [-90, 0, 90]; // pointer positions for A/B/C
 
-  // Wavesurfer
   const ws = WaveSurfer.create({{
     container: '#waveform',
     waveColor: '#c9cbd3',
@@ -143,7 +149,7 @@ html = f"""
     cursorWidth: 2,
   }});
 
-  let currentIdx = 0; // 0=A, 1=B, 2=C
+  let currentIdx = 0;
   let current = labels[currentIdx];
 
   const activeEl = document.getElementById('active');
@@ -186,7 +192,7 @@ html = f"""
   ws.on('play', () => {{ playBtn.textContent = '⏸'; playBtn.classList.add('pause'); }});
   ws.on('pause', () => {{ playBtn.textContent = '▶'; playBtn.classList.remove('pause'); }});
 
-  // Click knob to cycle A→B→C
+  // Click knob cycles A→B→C
   document.getElementById('knob').addEventListener('click', () => {{
     const next = (currentIdx + 1) % 3;
     loadVersion(next);
@@ -202,4 +208,4 @@ html = f"""
 </script>
 """
 
-st.components.v1.html(html, height=560)
+st.components.v1.html(html, height=600)
