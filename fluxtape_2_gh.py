@@ -67,103 +67,44 @@ html = f"""
 
 <!-- Volume slider -->
 <div style="text-align:center; margin-top:20px;">
-  <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" style="width:200px;">
+  <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider">
 </div>
 
 <style>
-  :root {{
-    --bg: #0f1115;
-    --accent: #4CAF50;
-    --text: #ffffff;
-  }}
-html, body, .stApp {{
-  height: 100%;
-  margin: 0;
-  background: linear-gradient(160deg, #0f1115 0%, #1a1d25 100%);
-}}
+  /* ... keep your existing styles ... */
 
-  .play-btn {{
-    width: 82px;
-    height: 82px;
+  /* Volume slider styling */
+  .slider {{
+    -webkit-appearance: none;
+    width: 220px;
+    height: 6px;
+    border-radius: 3px;
+    background: #444;
+    outline: none;
+    margin-top: 10px;
+  }}
+  .slider::-webkit-slider-thumb {{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    border: none;
-    font-size: 34px;
+    background: #4CAF50;
     cursor: pointer;
-    color: #fff;
-    background: var(--accent);
-    transition: background 0.25s ease, transform 0.2s ease, box-shadow .3s ease;
-    box-shadow: 0 6px 20px rgba(76,175,80,.4);
+    box-shadow: 0 0 6px rgba(76,175,80,.8);
+    transition: transform 0.2s ease;
   }}
-  .play-btn:hover {{ transform: scale(1.1); }}
-  .play-btn.pause {{
-    background: #FBC02D;
-    box-shadow: 0 6px 20px rgba(251,192,45,.4);
+  .slider::-webkit-slider-thumb:hover {{
+    transform: scale(1.2);
   }}
-
-  .knob-wrap {{
-    position: relative;
-    width: 260px;
-    height: 260px;
-    margin: 50px auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }}
-
-  .knob {{
-    width: 160px;
-    height: 160px;
+  .slider::-moz-range-thumb {{
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #2b313c, #1b1f27 70%);
-    position: relative;
-    box-shadow: inset 0 6px 14px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
-    border: 1px solid #2e3440;
-  }}
-  .center-dot {{
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #cfd8dc;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%);
-  }}
-  .pointer {{
-    position: absolute;
-    width: 4px;
-    height: 55px;
-    background: #ffffff;
-    border-radius: 2px;
-    transform-origin: bottom center;
-    bottom: 50%;
-    left: 50%;
-    translate: -50% 0;
-    box-shadow: 0 0 8px rgba(255,255,255,.35);
-    transition: transform 0.4s ease; /* smooth motion */
-  }}
-
-  .label {{
-    position: absolute;
-    background: #2a2f3a;
-    color: var(--text);
-    padding: 7px 14px;
-    border-radius: 14px;
-    font-family: sans-serif;
-    font-size: 14px;
+    background: #4CAF50;
     cursor: pointer;
-    transition: background .25s ease, box-shadow .25s ease;
+    box-shadow: 0 0 6px rgba(76,175,80,.8);
   }}
-  .label:hover {{ background: #3a4150; }}
-  .label.active {{
-    background: #b71c1c;
-    box-shadow: 0 0 14px rgba(183,28,28,0.9);
-  }}
-
-  /* Positions: A=9pm, B=12, C=3pm */
-  .labelA {{ top: 50%; left: -40px; transform: translateY(-50%); }}
-  .labelB {{ top: -20px; left: 50%; transform: translateX(-50%); }}
-  .labelC {{ top: 50%; right: -40px; transform: translateY(-50%); }}
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
@@ -171,7 +112,7 @@ html, body, .stApp {{
 <script>
   const audioMap = {audio_map};
   const labels = ["A","B","C"];
-  const angles = [270, 0, 90]; // A=left, B=top, C=right
+  const angles = [270, 0, 90];
 
   const ws = WaveSurfer.create({{
     container: '#waveform',
@@ -189,6 +130,7 @@ html, body, .stApp {{
   const pointer = document.getElementById('pointer');
   const labelEls = Array.from(document.querySelectorAll('.label'));
   const timeDisplay = document.getElementById('time-display');
+  const volSlider = document.getElementById('volumeSlider');
 
   function formatTime(sec) {{
     const m = Math.floor(sec / 60);
@@ -240,7 +182,7 @@ html, body, .stApp {{
   ws.on('pause', () => {{ playBtn.textContent = '▶'; playBtn.classList.remove('pause'); }});
 
   // Volume slider
-  document.getElementById('volumeSlider').addEventListener('input', e => {{
+  volSlider.addEventListener('input', e => {{
     ws.setVolume(parseFloat(e.target.value));
   }});
 
