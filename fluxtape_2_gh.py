@@ -127,9 +127,9 @@ html = f"""
   }}
 
   /* Positions: A=9pm, B=12, C=3pm */
-  .labelA {{ top: 50%; left: -57px; transform: translateY(-50%); }}
-  .labelB {{ top: -20px; left: 50%; transform: translateX(-50%); }}
-  .labelC {{ top: 50%; right: -57px; transform: translateY(-50%); }}
+  .labelA {{ top: 50%; left: -50px; transform: translateY(-50%); }}
+  .labelB {{ top: -12px; left: 50%; transform: translateX(-50%); }}
+  .labelC {{ top: 50%; right: -50px; transform: translateY(-50%); }}
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
