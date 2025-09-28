@@ -17,8 +17,8 @@ audio_map = {k: file_to_data_url(v) for k, v in audio_files.items()}
 
 html = f"""
 <div style="text-align:center; margin-bottom:10px;">
-  <h2 style="font-family:sans-serif; font-weight:700; color:#ffffff; margin-bottom:25px;">
-    FluxTape — Lyrics Toggle
+  <h2 style="font-family:sans-serif; font-weight:700; color:#ffffff; margin-bottom:15px;">
+    FluxTape — Lyrics Versions
   </h2>
   <button id="playBtn" class="play-btn">▶</button>
 </div>
@@ -36,17 +36,15 @@ html = f"""
   <div class="label labelC" data-idx="2">Lyrics C</div>
 </div>
 
-<div style="margin-top:16px; text-align:center;">
-  <span id="active" style="font-weight:600; color:#ffffff; font-size:16px;"></span>
-</div>
-
 <style>
   :root {{
     --bg: #0f1115;
     --accent: #4CAF50;
     --text: #ffffff;
   }}
-  body {{ background: var(--bg); }}
+  body {{
+    background: linear-gradient(160deg, #0f1115 0%, #1a1d25 100%);
+  }}
 
   .play-btn {{
     width: 82px;
@@ -127,9 +125,9 @@ html = f"""
   }}
 
   /* Positions: A=9pm, B=12, C=3pm */
-  .labelA {{ top: 50%; left: -50px; transform: translateY(-50%); }}
-  .labelB {{ top: -12px; left: 50%; transform: translateX(-50%); }}
-  .labelC {{ top: 50%; right: -50px; transform: translateY(-50%); }}
+  .labelA {{ top: 50%; left: -40px; transform: translateY(-50%); }}
+  .labelB {{ top: -20px; left: 50%; transform: translateX(-50%); }}
+  .labelC {{ top: 50%; right: -40px; transform: translateY(-50%); }}
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
@@ -141,9 +139,9 @@ html = f"""
 
   const ws = WaveSurfer.create({{
     container: '#waveform',
-    waveColor: '#c9cbd3',
-    progressColor: '#5f6bff',
-    height: 90,
+    waveColor: '#c9cbd3',     // restored original
+    progressColor: '#5f6bff', // restored original
+    height: 120,
     backend: 'WebAudio',
     cursorWidth: 2,
   }});
@@ -151,7 +149,6 @@ html = f"""
   let currentIdx = 0;
   let current = labels[currentIdx];
 
-  const activeEl = document.getElementById('active');
   const playBtn = document.getElementById('playBtn');
   const pointer = document.getElementById('pointer');
   const labelEls = Array.from(document.querySelectorAll('.label'));
@@ -172,7 +169,6 @@ html = f"""
     ws.once('ready', () => {{
       if (keepTime) ws.setTime(Math.min(t, ws.getDuration()-0.01));
       if (playing) ws.play();
-      activeEl.textContent = 'Active: Lyrics ' + label;
     }});
     currentIdx = idx;
     current = label;
