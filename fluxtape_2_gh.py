@@ -70,7 +70,7 @@ html = f"""
     position: relative;
     width: 260px;
     height: 260px;
-    margin: 30px auto;
+    margin: 50px auto;
     display: flex;
     align-items: center;
     justify-content: center;
