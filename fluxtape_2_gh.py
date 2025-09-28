@@ -23,7 +23,7 @@ html = f"""
   <button id="playBtn" class="play-btn">▶</button>
 </div>
 
-<div id="waveform" style="margin-top:20px;"></div>
+<div id="waveform" style="margin-top:40px;"></div>
 
 <!-- Knob + orbiting labels -->
 <div class="knob-wrap">
