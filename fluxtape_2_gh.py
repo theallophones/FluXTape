@@ -54,6 +54,11 @@ html = f"""
   0:00 / 0:00
 </div>
 
+<!-- Volume slider -->
+<div style="text-align:center; margin:18px 0;">
+  <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider">
+</div>
+
 <!-- Knob + orbiting labels -->
 <div class="knob-wrap">
   <div id="knob" class="knob" title="Click to switch Lyrics version">
@@ -63,11 +68,6 @@ html = f"""
   <div class="label labelA" data-idx="0">Lyrics A</div>
   <div class="label labelB" data-idx="1">Lyrics B</div>
   <div class="label labelC" data-idx="2">Lyrics C</div>
-</div>
-
-<!-- Volume slider -->
-<div style="text-align:center; margin-top:20px;">
-  <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" style="width:200px;">
 </div>
 
 <style>
@@ -104,7 +104,7 @@ html, body, .stApp {{
     position: relative;
     width: 260px;
     height: 260px;
-    margin: 50px auto;
+    margin: 40px auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -158,6 +158,38 @@ html, body, .stApp {{
   .label.active {{
     background: #b71c1c;
     box-shadow: 0 0 14px rgba(183,28,28,0.9);
+  }}
+
+  /* Volume slider styling */
+  .slider {{
+    -webkit-appearance: none;
+    width: 260px;
+    height: 6px;
+    border-radius: 3px;
+    background: #5f6bff; /* track (purple like waveform) */
+    outline: none;
+    cursor: pointer;
+  }}
+  .slider::-webkit-slider-thumb {{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #b71c1c; /* thumb (red like active lyric button) */
+    box-shadow: 0 0 6px rgba(183,28,28,.6);
+    transition: transform 0.2s ease;
+  }}
+  .slider::-webkit-slider-thumb:hover {{
+    transform: scale(1.2);
+  }}
+  .slider::-moz-range-thumb {{
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #b71c1c;
+    box-shadow: 0 0 6px rgba(183,28,28,.6);
+    cursor: pointer;
   }}
 
   /* Positions: A=9pm, B=12, C=3pm */
@@ -220,7 +252,7 @@ html, body, .stApp {{
       if (keepTime) ws.setTime(Math.min(t, ws.getDuration()-0.01));
       if (playing) ws.play();
       updateTime();
-      ws.setVolume(parseFloat(volSlider.value)); // ensure volume sync
+      ws.setVolume(parseFloat(volSlider.value)); // sync volume
     }});
     currentIdx = idx;
     current = label;
@@ -235,7 +267,7 @@ html, body, .stApp {{
 
   ws.on('ready', () => {{
     updateTime();
-    ws.setVolume(parseFloat(volSlider.value)); // set initial volume
+    ws.setVolume(parseFloat(volSlider.value)); // initial volume
   }});
   ws.on('audioprocess', updateTime);
 
@@ -265,4 +297,4 @@ html, body, .stApp {{
 </script>
 """
 
-st.components.v1.html(html, height=900)
+st.components.v1.html(html, height=950)
