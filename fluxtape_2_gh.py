@@ -23,7 +23,7 @@ html = f"""
   <button id="playBtn" class="play-btn">▶</button>
 </div>
 
-<div id="waveform" style="margin:25px auto;"></div>
+<div id="waveform" style="margin:25px auto; width:95%;"></div>
 
 <!-- Knob + orbiting labels -->
 <div class="knob-wrap">
@@ -139,13 +139,13 @@ html = f"""
   const labels = ["A","B","C"];
   const angles = [270, 0, 90]; // A=left, B=top, C=right
 
- const ws = WaveSurfer.create({
-  container: '#waveform',
-  waveColor: '#c9cbd3',
-  progressColor: '#5f6bff',
-  height: 120,   // was 160 → slimmer
-  backend: 'WebAudio',
-  cursorWidth: 2,
+  const ws = WaveSurfer.create({{
+    container: '#waveform',
+    waveColor: '#c9cbd3',
+    progressColor: '#5f6bff',
+    height: 120,
+    backend: 'WebAudio',
+    cursorWidth: 2,
   }});
 
   let currentIdx = 0;
