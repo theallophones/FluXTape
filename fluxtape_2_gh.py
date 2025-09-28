@@ -37,7 +37,7 @@ audio_map = {k: file_to_data_url(v) for k, v in audio_files.items()}
 
 html = f"""
 <div style="text-align:center; margin-bottom:10px;">
-  <h2 style="font-family:sans-serif; font-weight:700; color:#ffffff; margin-bottom:15px;">
+  <h2 style="font-family:sans-serif; font-weight:700; color:#ffffff; margin-bottom:25px;">
     FluxTape — Lyrics Versions
   </h2>
   <button id="playBtn" class="play-btn">▶</button>
