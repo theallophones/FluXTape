@@ -17,13 +17,13 @@ audio_map = {k: file_to_data_url(v) for k, v in audio_files.items()}
 
 html = f"""
 <div style="text-align:center; margin-bottom:20px;">
-  <h2 style="font-family:sans-serif; font-weight:700; color:#ffffff; margin-bottom:20px;">
+  <h2 style="font-family:sans-serif; font-weight:700; color:#ffffff; margin-bottom:40px;">
     FluxTape — Lyrics Versions
   </h2>
   <button id="playBtn" class="play-btn">▶</button>
 </div>
 
-<div id="waveform" style="margin-top:40px;"></div>
+<div id="waveform" style="margin-top:20px;"></div>
 
 <!-- Knob + orbiting labels -->
 <div class="knob-wrap">
