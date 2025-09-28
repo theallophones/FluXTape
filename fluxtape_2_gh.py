@@ -17,7 +17,7 @@ audio_map = {k: file_to_data_url(v) for k, v in audio_files.items()}
 
 html = f"""
 <div style="text-align:center; margin-bottom:20px;">
-  <h2 style="font-family:sans-serif; font-weight:700; color:#ffffff; margin-bottom:40px;">
+  <h2 style="font-family:sans-serif; font-weight:700; color:#ffffff; margin-bottom:20px;">
     FluxTape — Lyrics Versions
   </h2>
   <button id="playBtn" class="play-btn">▶</button>
@@ -69,7 +69,7 @@ html = f"""
   /* Knob container */
   .knob-wrap {{
     position: relative;
-    width: 260px;   /* enough space for knob + orbit */
+    width: 260px;
     height: 260px;
     margin: 40px auto;
     display: flex;
@@ -128,7 +128,7 @@ html = f"""
     box-shadow: 0 0 0 2px #ffebee inset;
   }}
 
-  .labelA {{ top: -10px; left: 50%; transform: translateX(-50%); }}  /* 12 o’clock */
+  .labelA {{ top: -40px; left: 50%; transform: translateX(-50%); }}  /* 12 o’clock */
   .labelB {{ top: 50%; right: -60px; transform: translateY(-50%); }} /* 3 o’clock */
   .labelC {{ top: 50%; left: -60px; transform: translateY(-50%); }}  /* 9 o’clock */
 </style>
@@ -138,7 +138,7 @@ html = f"""
 <script>
   const audioMap = {audio_map};
   const labels = ["A","B","C"];
-  const angles = [-90, 0, 90]; // pointer positions for A/B/C
+  const angles = [-90, 0, 90]; // 0=A top, 1=B right, 2=C left
 
   const ws = WaveSurfer.create({{
     container: '#waveform',
