@@ -129,8 +129,8 @@ html = f"""
   }}
 
   .labelA {{ top: -10px; left: 50%; transform: translateX(-50%); }}  /* 12 o’clock */
-  .labelB {{ top: 50%; right: -10px; transform: translateY(-50%); }} /* 3 o’clock */
-  .labelC {{ top: 50%; left: -10px; transform: translateY(-50%); }}  /* 9 o’clock */
+  .labelB {{ top: 50%; right: -40px; transform: translateY(-50%); }} /* 3 o’clock */
+  .labelC {{ top: 50%; left: -40px; transform: translateY(-50%); }}  /* 9 o’clock */
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
