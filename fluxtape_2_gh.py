@@ -1,6 +1,7 @@
 import streamlit as st
 import base64
 
+st.set_page_config(layout="wide")
 
 st.markdown("""
 <style>
@@ -38,7 +39,7 @@ audio_map = {k: file_to_data_url(v) for k, v in audio_files.items()}
 html = f"""
 <div style="text-align:center; margin-bottom:10px;">
   <h1 style="font-family:sans-serif; font-weight:800; color:#ffffff; font-size:40px; margin-bottom:5px;">
-    FluXTape
+    FluX-Tape
   </h1>
   <h3 style="font-family:sans-serif; font-weight:500; color:#cccccc; font-size:18px; margin-top:0;">
     Lyrics Versions
@@ -47,6 +48,11 @@ html = f"""
 </div>
 
 <div id="waveform" style="margin:25px auto; width:85%;"></div>
+
+<!-- Time counter -->
+<div id="time-display" style="text-align:center; margin-top:6px; color:#ccc; font-family:sans-serif; font-size:14px;">
+  0:00 / 0:00
+</div>
 
 <!-- Knob + orbiting labels -->
 <div class="knob-wrap">
@@ -57,6 +63,11 @@ html = f"""
   <div class="label labelA" data-idx="0">Lyrics A</div>
   <div class="label labelB" data-idx="1">Lyrics B</div>
   <div class="label labelC" data-idx="2">Lyrics C</div>
+</div>
+
+<!-- Volume slider -->
+<div style="text-align:center; margin-top:20px;">
+  <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" style="width:200px;">
 </div>
 
 <style>
@@ -164,8 +175,8 @@ html, body, .stApp {{
 
   const ws = WaveSurfer.create({{
     container: '#waveform',
-    waveColor: '#c9cbd3',     // restored original
-    progressColor: '#5f6bff', // restored original
+    waveColor: '#c9cbd3',
+    progressColor: '#5f6bff',
     height: 120,
     backend: 'WebAudio',
     cursorWidth: 2,
@@ -177,6 +188,19 @@ html, body, .stApp {{
   const playBtn = document.getElementById('playBtn');
   const pointer = document.getElementById('pointer');
   const labelEls = Array.from(document.querySelectorAll('.label'));
+  const timeDisplay = document.getElementById('time-display');
+
+  function formatTime(sec) {{
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${{m}}:${{s}}`;
+  }}
+
+  function updateTime() {{
+    const cur = ws.getCurrentTime();
+    const total = ws.getDuration();
+    timeDisplay.textContent = formatTime(cur) + ' / ' + formatTime(total);
+  }}
 
   function setLabelActive(idx) {{
     labelEls.forEach((el,i)=> el.classList.toggle('active', i===idx));
@@ -194,6 +218,7 @@ html, body, .stApp {{
     ws.once('ready', () => {{
       if (keepTime) ws.setTime(Math.min(t, ws.getDuration()-0.01));
       if (playing) ws.play();
+      updateTime();
     }});
     currentIdx = idx;
     current = label;
@@ -206,10 +231,18 @@ html, body, .stApp {{
   setPointer(currentIdx);
   setLabelActive(currentIdx);
 
+  ws.on('ready', updateTime);
+  ws.on('audioprocess', updateTime);
+
   // Play/pause
   playBtn.addEventListener('click', () => ws.playPause());
   ws.on('play', () => {{ playBtn.textContent = '⏸'; playBtn.classList.add('pause'); }});
   ws.on('pause', () => {{ playBtn.textContent = '▶'; playBtn.classList.remove('pause'); }});
+
+  // Volume slider
+  document.getElementById('volumeSlider').addEventListener('input', e => {{
+    ws.setVolume(parseFloat(e.target.value));
+  }});
 
   // Click knob cycles A→B→C
   document.getElementById('knob').addEventListener('click', () => {{
@@ -227,4 +260,4 @@ html, body, .stApp {{
 </script>
 """
 
-st.components.v1.html(html, height=640)
+st.components.v1.html(html, height=700)
