@@ -189,6 +189,7 @@ html, body, .stApp {{
   const pointer = document.getElementById('pointer');
   const labelEls = Array.from(document.querySelectorAll('.label'));
   const timeDisplay = document.getElementById('time-display');
+  const volSlider = document.getElementById('volumeSlider');
 
   function formatTime(sec) {{
     const m = Math.floor(sec / 60);
@@ -219,6 +220,7 @@ html, body, .stApp {{
       if (keepTime) ws.setTime(Math.min(t, ws.getDuration()-0.01));
       if (playing) ws.play();
       updateTime();
+      ws.setVolume(parseFloat(volSlider.value)); // ensure volume sync
     }});
     currentIdx = idx;
     current = label;
@@ -231,7 +233,10 @@ html, body, .stApp {{
   setPointer(currentIdx);
   setLabelActive(currentIdx);
 
-  ws.on('ready', updateTime);
+  ws.on('ready', () => {{
+    updateTime();
+    ws.setVolume(parseFloat(volSlider.value)); // set initial volume
+  }});
   ws.on('audioprocess', updateTime);
 
   // Play/pause
@@ -240,7 +245,7 @@ html, body, .stApp {{
   ws.on('pause', () => {{ playBtn.textContent = '▶'; playBtn.classList.remove('pause'); }});
 
   // Volume slider
-  document.getElementById('volumeSlider').addEventListener('input', e => {{
+  volSlider.addEventListener('input', e => {{
     ws.setVolume(parseFloat(e.target.value));
   }});
 
@@ -260,4 +265,4 @@ html, body, .stApp {{
 </script>
 """
 
-st.components.v1.html(html, height=700)
+st.components.v1.html(html, height=900)
