@@ -27,12 +27,12 @@ html = f"""
 <div id="waveform" style="margin-top:20px;"></div>
 
 <!-- 🎛 knob selector -->
-<div style="display:flex; justify-content:center; margin-top:20px;">
+<div style="display:flex; justify-content:center; margin-top:25px;">
   <webaudio-knob id="versionKnob"
     src="https://webaudio.github.io/webaudio-controls/knobs/LittlePhatty.png"
     value="0" min="0" max="2" step="1"
-    diameter="90" sprites="100"
-    tooltip="Select Lyrics Version">
+    diameter="100" sprites="100"
+    style="background:#222; border-radius:50%;">
   </webaudio-knob>
 </div>
 
@@ -64,8 +64,9 @@ html = f"""
   .play-btn.pause {{ background: #FBC02D; }} /* yellow when paused */
 </style>
 
-<script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+<!-- load knob library BEFORE using it -->
 <script src="https://webaudio.github.io/webaudio-controls/webaudio-controls.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
 
 <script>
   const audioMap = {audio_map};
@@ -117,4 +118,4 @@ html = f"""
 </script>
 """
 
-st.components.v1.html(html, height=450)
+st.components.v1.html(html, height=500)
