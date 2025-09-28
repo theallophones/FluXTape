@@ -139,13 +139,13 @@ html = f"""
   const labels = ["A","B","C"];
   const angles = [270, 0, 90]; // A=left, B=top, C=right
 
-  const ws = WaveSurfer.create({{
-    container: '#waveform',
-    waveColor: '#c9cbd3',
-    progressColor: '#5f6bff',
-    height: 160,
-    backend: 'WebAudio',
-    cursorWidth: 2,
+ const ws = WaveSurfer.create({
+  container: '#waveform',
+  waveColor: '#c9cbd3',
+  progressColor: '#5f6bff',
+  height: 120,   // was 160 → slimmer
+  backend: 'WebAudio',
+  cursorWidth: 2,
   }});
 
   let currentIdx = 0;
