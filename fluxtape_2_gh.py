@@ -137,7 +137,7 @@ html = f"""
 
 <script>
   const audioMap = {audio_map};
-  const labels = ["A","B","C"];
+  const labels = ["A","C","B"];
   const angles = [-90, 90, 0]; // 0=A top, 1=B right, 2=C left
 
   const ws = WaveSurfer.create({{
