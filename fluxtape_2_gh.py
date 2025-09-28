@@ -1,9 +1,8 @@
 import streamlit as st
 import base64
 
-st.title("FluxTape — Lyrics Versions")
-
-
+# Remove default Streamlit title since we'll add a custom one in HTML
+# st.title("FluxTape — Lyrics Versions")
 
 # Audio files (relative paths — must be in same folder as this script)
 audio_files = {
@@ -21,29 +20,40 @@ def file_to_data_url(path, mime="audio/mpeg"):
 audio_map = {k: file_to_data_url(v) for k, v in audio_files.items()}
 
 html = f"""
-<div style="text-align:center; margin-bottom:20px;">
+<div style="text-align:center; margin-bottom:15px;">
+  <h2 style="font-family:sans-serif; font-weight:600; color:#ffffff; margin-bottom:20px;">
+    FluxTape — Lyrics Versions
+  </h2>
   <button id="playBtn" class="play-btn">▶</button>
 </div>
 
-<div id="waveform"></div>
+<div id="waveform" style="margin-top:20px;"></div>
 
-<div style="display:flex; justify-content:space-between; margin-top:12px;">
+<div style="display:flex; justify-content:space-evenly; margin-top:18px;">
   <button class="toggle" data-key="A">Lyrics A</button>
   <button class="toggle" data-key="B">Lyrics B</button>
   <button class="toggle" data-key="C">Lyrics C</button>
 </div>
 
-<div style="margin-top:12px; text-align:center;">
-  <span id="active" style="font-weight:500; opacity:0.8;"></span>
+<div style="margin-top:14px; text-align:center;">
+  <span id="active" style="font-weight:600; color:#ffffff; font-size:15px;"></span>
 </div>
 
 <style>
+  body {{
+    background-color: #111;
+  }}
+
+  h2 {{
+    margin: 0;
+  }}
+
   .play-btn {{
-    width: 70px;
-    height: 70px;
+    width: 75px;
+    height: 75px;
     border-radius: 50%;
     border: none;
-    font-size: 28px;
+    font-size: 30px;
     cursor: pointer;
     color: #fff;
     background: #4CAF50; /* green default */
@@ -56,8 +66,8 @@ html = f"""
     border: none;
     background: #e53935;  /* red */
     color: #fff;
-    padding: 10px 20px;
-    border-radius: 18px;
+    padding: 10px 24px;
+    border-radius: 24px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
@@ -131,9 +141,4 @@ html = f"""
 </script>
 """
 
-st.components.v1.html(html, height=350)
-
-
-#this is for you Peyman - now here whatever you do is gonna appear remotley too. This is really great. 
-
-
+st.components.v1.html(html, height=400)
