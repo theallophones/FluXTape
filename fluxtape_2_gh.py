@@ -1,6 +1,26 @@
 import streamlit as st
 import base64
 
+
+st.markdown("""
+<style>
+/* make the whole app use the gradient */
+[data-testid="stAppViewContainer"] {
+  background: linear-gradient(160deg, #0f1115 0%, #1a1d25 100%) fixed !important;
+}
+
+/* hide the default header bar background so gradient shows through */
+[data-testid="stHeader"] {
+  background: rgba(0,0,0,0) !important;
+}
+
+/* optional: sidebar tint (remove if you don't use sidebar) */
+[data-testid="stSidebar"] {
+  background: rgba(0,0,0,0.15) !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # --- Audio files (must sit next to this script) ---
 audio_files = {
     "A": "H1A.mp3",
