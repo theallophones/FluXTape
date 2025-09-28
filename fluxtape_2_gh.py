@@ -26,14 +26,9 @@ html = f"""
 
 <div id="waveform" style="margin-top:20px;"></div>
 
-<!-- 🎛 knob selector -->
+<!-- 🎛 NexusUI knob -->
 <div style="display:flex; justify-content:center; margin-top:25px;">
-  <webaudio-knob id="versionKnob"
-    src="https://webaudio.github.io/webaudio-controls/knobs/LittlePhatty.png"
-    value="0" min="0" max="2" step="1"
-    diameter="100" sprites="100"
-    style="background:#222; border-radius:50%;">
-  </webaudio-knob>
+  <div id="knob" style="width:100px; height:100px;"></div>
 </div>
 
 <div style="margin-top:14px; text-align:center;">
@@ -64,8 +59,8 @@ html = f"""
   .play-btn.pause {{ background: #FBC02D; }} /* yellow when paused */
 </style>
 
-<!-- load knob library BEFORE using it -->
-<script src="https://webaudio.github.io/webaudio-controls/webaudio-controls.js"></script>
+<!-- load NexusUI + WaveSurfer -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/nexusui/2.0.12/nexusUI.min.js"></script>
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
 
 <script>
@@ -85,10 +80,7 @@ html = f"""
   document.getElementById("active").textContent = "Active: Lyrics " + current;
 
   const playBtn = document.getElementById("playBtn");
-
-  playBtn.addEventListener("click", () => {{
-    wavesurfer.playPause();
-  }});
+  playBtn.addEventListener("click", () => {{ wavesurfer.playPause(); }});
 
   wavesurfer.on("play", () => {{
     playBtn.textContent = "⏸";
@@ -100,10 +92,17 @@ html = f"""
     playBtn.classList.remove("pause");
   }});
 
-  // 🎛 knob listener
-  const knob = document.getElementById("versionKnob");
-  knob.addEventListener("input", (e) => {{
-    const label = labels[parseInt(e.target.value)];
+  // 🎛 NexusUI Knob
+  const knob = new Nexus.Knob('#knob', {{
+    'size': [100,100],
+    'min': 0,
+    'max': 2,
+    'step': 1,
+    'value': 0
+  }});
+
+  knob.on('change', (val) => {{
+    const label = labels[Math.round(val)];
     if (label === current) return;
     const time = wavesurfer.getCurrentTime();
     const playing = wavesurfer.isPlaying();
