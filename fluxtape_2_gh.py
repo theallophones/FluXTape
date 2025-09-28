@@ -128,7 +128,7 @@ html = f"""
     box-shadow: 0 0 0 2px #ffebee inset;
   }}
 
-  .labelA {{ top: -40px; left: 50%; transform: translateX(-50%); }}  /* 12 o’clock */
+  .labelA {{ top: -10px; left: 50%; transform: translateX(-50%); }}  /* 12 o’clock */
   .labelB {{ top: 50%; right: -60px; transform: translateY(-50%); }} /* 3 o’clock */
   .labelC {{ top: 50%; left: -60px; transform: translateY(-50%); }}  /* 9 o’clock */
 </style>
