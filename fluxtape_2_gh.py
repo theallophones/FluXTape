@@ -25,16 +25,14 @@ html = f"""
 
 <div id="waveform" style="margin-top:20px;"></div>
 
-<!-- Knob (no external UI libs; pure CSS/JS; click to cycle A→B→C) -->
-<div class="knob-wrap">
+<!-- Knob + circular labels -->
+<div class="knob-container">
   <div id="knob" class="knob" title="Click to switch Lyrics version">
     <div id="pointer" class="pointer"></div>
     <div class="center-dot"></div>
-  </div>
-  <div class="ticks">
-    <span data-idx="0">Lyrics A</span>
-    <span data-idx="1">Lyrics B</span>
-    <span data-idx="2">Lyrics C</span>
+    <div class="label labelA" data-idx="0">Lyrics A</div>
+    <div class="label labelB" data-idx="1">Lyrics B</div>
+    <div class="label labelC" data-idx="2">Lyrics C</div>
   </div>
 </div>
 
@@ -45,8 +43,6 @@ html = f"""
 <style>
   :root {{
     --bg: #0f1115;
-    --panel: #171a21;
-    --ring: #2a2f3a;
     --accent: #4CAF50;
     --text: #ffffff;
   }}
@@ -70,45 +66,20 @@ html = f"""
     box-shadow: 0 6px 18px rgba(251,192,45,.35);
   }}
 
-  /* Knob wrapper and labels */
-  .knob-wrap {{
-    margin-top: 26px;
+  /* Knob + circular layout */
+  .knob-container {{
     display: grid;
     place-items: center;
-    gap: 12px;
+    margin-top: 40px;
   }}
-  .ticks {{
-    display: flex;
-    gap: 22px;
-    font-family: sans-serif;
-    font-size: 14px;
-    color: var(--text);
-  }}
-  .ticks span {{
-    padding: 6px 12px;
-    border-radius: 12px;
-    background: #2a2f3a;
-    cursor: pointer;
-    user-select: none;
-    transition: background .2s ease, box-shadow .2s ease;
-  }}
-  .ticks span.active {{
-    background: #b71c1c;
-    box-shadow: 0 0 0 2px #ffebee inset;
-  }}
-  .ticks span:hover {{ background: #3a4150; }}
-
-  /* Knob face */
   .knob {{
-    width: 120px;
-    height: 120px;
+    width: 180px;
+    height: 180px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #2b313c, #1b1f27 70%);
     position: relative;
     box-shadow: inset 0 6px 14px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
     border: 1px solid #2e3440;
-    display: grid;
-    place-items: center;
   }}
   .center-dot {{
     width: 10px;
@@ -116,11 +87,14 @@ html = f"""
     border-radius: 50%;
     background: #cfd8dc;
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
   }}
   .pointer {{
     position: absolute;
     width: 4px;
-    height: 44px;
+    height: 60px;
     background: #ffffff;
     border-radius: 2px;
     transform-origin: bottom center;
@@ -129,6 +103,27 @@ html = f"""
     translate: -50% 0;
     box-shadow: 0 0 8px rgba(255,255,255,.35);
   }}
+
+  /* Labels around knob */
+  .label {{
+    position: absolute;
+    background: #2a2f3a;
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-family: sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background .2s ease, box-shadow .2s ease;
+  }}
+  .label:hover {{ background: #3a4150; }}
+  .label.active {{
+    background: #b71c1c;
+    box-shadow: 0 0 0 2px #ffebee inset;
+  }}
+  .labelA {{ top: 10%; left: 50%; transform: translate(-50%, -50%); }}   /* 12 o'clock */
+  .labelB {{ right: -10%; top: 50%; transform: translate(0, -50%); }}   /* 3 o'clock */
+  .labelC {{ left: -10%; top: 50%; transform: translate(0, -50%); }}    /* 9 o'clock */
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
@@ -154,10 +149,10 @@ html = f"""
   const activeEl = document.getElementById('active');
   const playBtn = document.getElementById('playBtn');
   const pointer = document.getElementById('pointer');
-  const tickEls = Array.from(document.querySelectorAll('.ticks span'));
+  const labelEls = Array.from(document.querySelectorAll('.label'));
 
-  function setTickActive(idx) {{
-    tickEls.forEach((el,i)=> el.classList.toggle('active', i===idx));
+  function setLabelActive(idx) {{
+    labelEls.forEach((el,i)=> el.classList.toggle('active', i===idx));
   }}
 
   function setPointer(idx) {{
@@ -177,14 +172,14 @@ html = f"""
     currentIdx = idx;
     current = label;
     setPointer(idx);
-    setTickActive(idx);
+    setLabelActive(idx);
   }}
 
   // Init
   ws.load(audioMap[current]);
   activeEl.textContent = 'Active: Lyrics ' + current;
   setPointer(currentIdx);
-  setTickActive(currentIdx);
+  setLabelActive(currentIdx);
 
   // Play/pause
   playBtn.addEventListener('click', () => ws.playPause());
@@ -197,20 +192,14 @@ html = f"""
     loadVersion(next);
   }});
 
-  // Click labels under knob to jump directly
-  tickEls.forEach(el => {{
+  // Click labels directly
+  labelEls.forEach(el => {{
     el.addEventListener('click', () => {{
       const idx = parseInt(el.getAttribute('data-idx'));
       if (idx !== currentIdx) loadVersion(idx);
     }});
   }});
-
-  // Optional: arrow keys to switch
-  window.addEventListener('keydown', (e) => {{
-    if (e.key === 'ArrowRight') loadVersion((currentIdx+1)%3);
-    if (e.key === 'ArrowLeft') loadVersion((currentIdx+2)%3);
-  }});
 </script>
 """
 
-st.components.v1.html(html, height=520)
+st.components.v1.html(html, height=560)
