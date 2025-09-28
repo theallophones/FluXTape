@@ -42,9 +42,11 @@ html = f"""
     --accent: #4CAF50;
     --text: #ffffff;
   }}
-  body {{
-    background: linear-gradient(160deg, #0f1115 0%, #1a1d25 100%);
-  }}
+html, body, .stApp {{
+  height: 100%;
+  margin: 0;
+  background: linear-gradient(160deg, #0f1115 0%, #1a1d25 100%);
+}}
 
   .play-btn {{
     width: 82px;
