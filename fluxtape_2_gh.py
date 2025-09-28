@@ -3,6 +3,10 @@ import base64
 
 st.title("FluxTape — Lyrics Versions")
 
+
+
+print("hey this is a test")
+
 # Audio files (relative paths — must be in same folder as this script)
 audio_files = {
     "A": "H1A.mp3",
