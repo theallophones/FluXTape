@@ -143,7 +143,7 @@ html = f"""
     container: '#waveform',
     waveColor: '#c9cbd3',
     progressColor: '#5f6bff',
-    height: 120,
+    height: 90,
     backend: 'WebAudio',
     cursorWidth: 2,
   }});
