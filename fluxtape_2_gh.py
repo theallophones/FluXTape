@@ -5,8 +5,6 @@ st.title("FluxTape — Lyrics Versions")
 
 
 
-print("hey this is a test")
-
 # Audio files (relative paths — must be in same folder as this script)
 audio_files = {
     "A": "H1A.mp3",
@@ -24,42 +22,31 @@ audio_map = {k: file_to_data_url(v) for k, v in audio_files.items()}
 
 html = f"""
 <div style="text-align:center; margin-bottom:20px;">
-  <h2 style="font-family:sans-serif; font-weight:600; color:#ffffff; margin-bottom:15px;">
-    FluxTape — Lyrics Versions
-  </h2>
   <button id="playBtn" class="play-btn">▶</button>
 </div>
 
-<div id="waveform" style="margin-top:20px;"></div>
+<div id="waveform"></div>
 
-<div style="display:flex; justify-content:space-evenly; margin-top:18px;">
+<div style="display:flex; justify-content:space-between; margin-top:12px;">
   <button class="toggle" data-key="A">Lyrics A</button>
   <button class="toggle" data-key="B">Lyrics B</button>
   <button class="toggle" data-key="C">Lyrics C</button>
 </div>
 
-<div style="margin-top:14px; text-align:center;">
-  <span id="active" style="font-weight:600; color:#ffffff; font-size:15px;"></span>
+<div style="margin-top:12px; text-align:center;">
+  <span id="active" style="font-weight:500; opacity:0.8;"></span>
 </div>
 
 <style>
-  body {{
-    background-color: #111;
-  }}
-
-  h2 {{
-    margin: 0;
-  }}
-
   .play-btn {{
-    width: 75px;
-    height: 75px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     border: none;
-    font-size: 30px;
+    font-size: 28px;
     cursor: pointer;
     color: #fff;
-    background: #4CAF50; /* green */
+    background: #4CAF50; /* green default */
     transition: background 0.25s ease, transform 0.1s ease;
   }}
   .play-btn:hover {{ transform: scale(1.05); }}
@@ -67,10 +54,10 @@ html = f"""
 
   .toggle {{
     border: none;
-    background: #e53935;
+    background: #e53935;  /* red */
     color: #fff;
-    padding: 10px 24px;
-    border-radius: 24px;
+    padding: 10px 20px;
+    border-radius: 18px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
@@ -84,6 +71,64 @@ html = f"""
     box-shadow: 0 0 0 2px #ffebee inset;
   }}
 </style>
+
+<script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+<script>
+  const audioMap = {audio_map};
+
+  const wavesurfer = WaveSurfer.create({{
+    container: '#waveform',
+    waveColor: '#bbb',
+    progressColor: '#333',
+    height: 140,
+    backend: 'WebAudio'
+  }});
+
+  let current = "A";
+  wavesurfer.load(audioMap[current]);
+  document.getElementById("active").textContent = "Active: Lyrics " + current;
+
+  const playBtn = document.getElementById("playBtn");
+
+  playBtn.addEventListener("click", () => {{
+    wavesurfer.playPause();
+  }});
+
+  wavesurfer.on("play", () => {{
+    playBtn.textContent = "⏸";
+    playBtn.classList.add("pause");
+  }});
+
+  wavesurfer.on("pause", () => {{
+    playBtn.textContent = "▶";
+    playBtn.classList.remove("pause");
+  }});
+
+  const buttons = document.querySelectorAll(".toggle");
+  function updateActive(label) {{
+    buttons.forEach(btn => {{
+      btn.classList.toggle("active", btn.dataset.key === label);
+    }});
+  }}
+  updateActive(current);
+
+  buttons.forEach(btn => {{
+    btn.addEventListener("click", () => {{
+      const label = btn.dataset.key;
+      if (label === current) return;
+      const time = wavesurfer.getCurrentTime();
+      const playing = wavesurfer.isPlaying();
+      current = label;
+      wavesurfer.load(audioMap[label]);
+      wavesurfer.once("ready", () => {{
+        wavesurfer.setTime(time);
+        if (playing) wavesurfer.play();
+        document.getElementById("active").textContent = "Active: Lyrics " + label;
+        updateActive(label);
+      }});
+    }});
+  }});
+</script>
 """
 
 st.components.v1.html(html, height=350)
