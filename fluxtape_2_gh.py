@@ -182,7 +182,6 @@ html = f"""
 
   // Init
   ws.load(audioMap[current]);
-  activeEl.textContent = 'Active: Lyrics ' + current;
   setPointer(currentIdx);
   setLabelActive(currentIdx);
 
