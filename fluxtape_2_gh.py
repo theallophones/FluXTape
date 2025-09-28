@@ -25,15 +25,15 @@ html = f"""
 
 <div id="waveform" style="margin-top:20px;"></div>
 
-<!-- Knob + orbiting labels -->
+<!-- Knob + orbiting labels (A=9pm, B=12, C=3pm) -->
 <div class="knob-wrap">
   <div id="knob" class="knob" title="Click to switch Lyrics version">
     <div id="pointer" class="pointer"></div>
     <div class="center-dot"></div>
   </div>
-  <div class="label labelA" data-idx="0">Lyrics A</div>
-  <div class="label labelB" data-idx="1">Lyrics B</div>
-  <div class="label labelC" data-idx="2">Lyrics C</div>
+  <div class="label labelA" data-label="A">Lyrics A</div>
+  <div class="label labelB" data-label="B">Lyrics B</div>
+  <div class="label labelC" data-label="C">Lyrics C</div>
 </div>
 
 <div style="margin-top:14px; text-align:center;">
@@ -66,7 +66,6 @@ html = f"""
     box-shadow: 0 6px 18px rgba(251,192,45,.35);
   }}
 
-  /* Knob container */
   .knob-wrap {{
     position: relative;
     width: 260px;
@@ -77,7 +76,6 @@ html = f"""
     justify-content: center;
   }}
 
-  /* Knob itself */
   .knob {{
     width: 160px;
     height: 160px;
@@ -110,7 +108,6 @@ html = f"""
     box-shadow: 0 0 8px rgba(255,255,255,.35);
   }}
 
-  /* Orbiting labels */
   .label {{
     position: absolute;
     background: #2a2f3a;
@@ -128,17 +125,20 @@ html = f"""
     box-shadow: 0 0 0 2px #ffebee inset;
   }}
 
-  .labelA {{ top: 50%; left: -60px; transform: translateY(-50%); }}  /* 3 o’clock */
-  .labelB {{ top: -10px; left: 50%; transform: translateX(-50%); }} /* 12 o’clock */
-  .labelC {{ top: 50%; right: -60px; transform: translateY(-50%); }}  /* 9 o’clock */
+  /* Positions: A=9pm, B=12, C=3pm */
+  .labelA {{ top: 50%; left: -60px; transform: translateY(-50%); }}
+  .labelB {{ top: -40px; left: 50%; transform: translateX(-50%); }}
+  .labelC {{ top: 50%; right: -60px; transform: translateY(-50%); }}
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
 
 <script>
   const audioMap = {audio_map};
-  const labels = ["A","C","B"];
-  const angles = [-90, 90, 0]; // 0=A top, 1=B right, 2=C left
+
+  // Correct pointer angles for each label
+  const angleByLabel = {{ A: 90, B: -90, C: 0 }}; 
+  // A=left (9pm), B=top (12), C=right (3)
 
   const ws = WaveSurfer.create({{
     container: '#waveform',
@@ -149,24 +149,25 @@ html = f"""
     cursorWidth: 2,
   }});
 
-  let currentIdx = 0;
-  let current = labels[currentIdx];
+  let currentLabel = "A";
 
   const activeEl = document.getElementById('active');
-  const playBtn = document.getElementById('playBtn');
-  const pointer = document.getElementById('pointer');
+  const playBtn  = document.getElementById('playBtn');
+  const pointer  = document.getElementById('pointer');
   const labelEls = Array.from(document.querySelectorAll('.label'));
 
-  function setLabelActive(idx) {{
-    labelEls.forEach((el,i)=> el.classList.toggle('active', i===idx));
+  function setLabelActive(label) {{
+    labelEls.forEach(el => {{
+      el.classList.toggle('active', el.dataset.label === label);
+    }});
   }}
 
-  function setPointer(idx) {{
-    pointer.style.transform = 'translate(-50%, 0) rotate(' + angles[idx] + 'deg)';
+  function setPointer(label) {{
+    const deg = angleByLabel[label];
+    pointer.style.transform = 'translate(-50%, 0) rotate(' + deg + 'deg)';
   }}
 
-  function loadVersion(idx, keepTime=true) {{
-    const label = labels[idx];
+  function loadVersion(label, keepTime=true) {{
     const t = ws.getCurrentTime();
     const playing = ws.isPlaying();
     ws.load(audioMap[label]);
@@ -175,37 +176,38 @@ html = f"""
       if (playing) ws.play();
       activeEl.textContent = 'Active: Lyrics ' + label;
     }});
-    currentIdx = idx;
-    current = label;
-    setPointer(idx);
-    setLabelActive(idx);
+    currentLabel = label;
+    setPointer(label);
+    setLabelActive(label);
   }}
 
   // Init
-  ws.load(audioMap[current]);
-  activeEl.textContent = 'Active: Lyrics ' + current;
-  setPointer(currentIdx);
-  setLabelActive(currentIdx);
+  ws.load(audioMap[currentLabel]);
+  activeEl.textContent = 'Active: Lyrics ' + currentLabel;
+  setPointer(currentLabel);
+  setLabelActive(currentLabel);
 
   // Play/pause
   playBtn.addEventListener('click', () => ws.playPause());
-  ws.on('play', () => {{ playBtn.textContent = '⏸'; playBtn.classList.add('pause'); }});
-  ws.on('pause', () => {{ playBtn.textContent = '▶'; playBtn.classList.remove('pause'); }});
+  ws.on('play', ()  => {{ playBtn.textContent = '⏸'; playBtn.classList.add('pause'); }});
+  ws.on('pause', () => {{ playBtn.textContent = '▶';  playBtn.classList.remove('pause'); }});
 
-  // Click knob cycles A→B→C
+  // Knob cycles in order A → B → C
+  const cycle = ['A','B','C'];
   document.getElementById('knob').addEventListener('click', () => {{
-    const next = (currentIdx + 1) % 3;
+    const i = cycle.indexOf(currentLabel);
+    const next = cycle[(i+1)%cycle.length];
     loadVersion(next);
   }});
 
-  // Click labels directly
+  // Labels click directly
   labelEls.forEach(el => {{
     el.addEventListener('click', () => {{
-      const idx = parseInt(el.getAttribute('data-idx'));
-      if (idx !== currentIdx) loadVersion(idx);
+      const label = el.dataset.label;
+      if (label !== currentLabel) loadVersion(label);
     }});
   }});
 </script>
 """
 
-st.components.v1.html(html, height=600)
+st.components.v1.html(html, height=620)
