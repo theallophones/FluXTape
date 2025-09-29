@@ -1,9 +1,6 @@
 import streamlit as st
 import base64
 
-
-#do you see the changes 
-
 st.set_page_config(layout="wide")
 
 st.markdown("""
@@ -57,11 +54,6 @@ html = f"""
   0:00 / 0:00
 </div>
 
-<!-- Volume slider -->
-<div style="text-align:center; margin:18px 0;">
-  <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider">
-</div>
-
 <!-- Knob + orbiting labels -->
 <div class="knob-wrap">
   <div id="knob" class="knob" title="Click to switch Lyrics version">
@@ -71,6 +63,11 @@ html = f"""
   <div class="label labelA" data-idx="0">Lyrics A</div>
   <div class="label labelB" data-idx="1">Lyrics B</div>
   <div class="label labelC" data-idx="2">Lyrics C</div>
+</div>
+
+<!-- Volume slider -->
+<div style="text-align:center; margin-top:20px;">
+  <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider">
 </div>
 
 <style>
@@ -107,7 +104,7 @@ html, body, .stApp {{
     position: relative;
     width: 260px;
     height: 260px;
-    margin: 40px auto;
+    margin: 50px auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -163,42 +160,27 @@ html, body, .stApp {{
     box-shadow: 0 0 14px rgba(183,28,28,0.9);
   }}
 
-  /* Volume slider styling */
-  .slider {{
-    -webkit-appearance: none;
-    width: 260px;
-    height: 6px;
-    border-radius: 3px;
-    background: #5f6bff; /* track (purple like waveform) */
-    outline: none;
-    cursor: pointer;
-  }}
-  .slider::-webkit-slider-thumb {{
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #b71c1c; /* thumb (red like active lyric button) */
-    box-shadow: 0 0 6px rgba(183,28,28,.6);
-    transition: transform 0.2s ease;
-  }}
-  .slider::-webkit-slider-thumb:hover {{
-    transform: scale(1.2);
-  }}
-  .slider::-moz-range-thumb {{
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #b71c1c;
-    box-shadow: 0 0 6px rgba(183,28,28,.6);
-    cursor: pointer;
-  }}
-
   /* Positions: A=9pm, B=12, C=3pm */
   .labelA {{ top: 50%; left: -40px; transform: translateY(-50%); }}
   .labelB {{ top: -20px; left: 50%; transform: translateX(-50%); }}
   .labelC {{ top: 50%; right: -40px; transform: translateY(-50%); }}
+
+  /* volume slider */
+  .slider {{
+    -webkit-appearance: none; width: 260px; height: 6px; border-radius: 3px;
+    background: linear-gradient(to right, #5f6bff 100%, #c9cbd3 0%);
+    outline: none; cursor: pointer;
+  }}
+  .slider::-webkit-slider-thumb {{
+    -webkit-appearance: none; appearance: none; width: 18px; height: 18px;
+    border-radius: 50%; background: #c9cbd3; box-shadow: 0 0 6px rgba(200,200,200,.6);
+    transition: transform .2s ease;
+  }}
+  .slider::-webkit-slider-thumb:hover {{ transform: scale(1.2); }}
+  .slider::-moz-range-thumb {{
+    width: 18px; height: 18px; border-radius: 50%; background: #c9cbd3;
+    box-shadow: 0 0 6px rgba(200,200,200,.6); cursor: pointer;
+  }}
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
@@ -246,6 +228,12 @@ html, body, .stApp {{
     pointer.style.transform = 'translate(-50%, 0) rotate(' + angles[idx] + 'deg)';
   }}
 
+  function updateSliderGradient(value) {{
+    const percent = value * 100;
+    volSlider.style.background =
+      `linear-gradient(to right, #5f6bff ${{percent}}%, #c9cbd3 ${{percent}}%)`;
+  }}
+
   function loadVersion(idx, keepTime=true) {{
     const label = labels[idx];
     const t = ws.getCurrentTime();
@@ -255,7 +243,7 @@ html, body, .stApp {{
       if (keepTime) ws.setTime(Math.min(t, ws.getDuration()-0.01));
       if (playing) ws.play();
       updateTime();
-      ws.setVolume(parseFloat(volSlider.value)); // sync volume
+      updateSliderGradient(volSlider.value);
     }});
     currentIdx = idx;
     current = label;
@@ -270,7 +258,7 @@ html, body, .stApp {{
 
   ws.on('ready', () => {{
     updateTime();
-    ws.setVolume(parseFloat(volSlider.value)); // initial volume
+    updateSliderGradient(volSlider.value);
   }});
   ws.on('audioprocess', updateTime);
 
@@ -281,7 +269,9 @@ html, body, .stApp {{
 
   // Volume slider
   volSlider.addEventListener('input', e => {{
-    ws.setVolume(parseFloat(e.target.value));
+    const val = parseFloat(e.target.value);
+    ws.setVolume(val);
+    updateSliderGradient(val);
   }});
 
   // Click knob cycles A→B→C
@@ -300,4 +290,4 @@ html, body, .stApp {{
 </script>
 """
 
-st.components.v1.html(html, height=950)
+st.components.v1.html(html, height=700)
