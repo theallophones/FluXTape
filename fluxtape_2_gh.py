@@ -57,9 +57,8 @@ html = f"""
   0:00 / 0:00
 </div>
 
-<!-- Volume control -->
+<!-- Volume slider -->
 <div style="text-align:center; margin:18px 0;">
-  <div style="color:#c9cbd3; font-size:20px; margin-bottom:6px;">🔊</div>
   <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider">
 </div>
 
@@ -170,7 +169,7 @@ html, body, .stApp {{
     width: 260px;
     height: 6px;
     border-radius: 3px;
-    background: linear-gradient(to right, #5f6bff 100%, #c9cbd3 0%);
+    background: #5f6bff; /* track (purple like waveform) */
     outline: none;
     cursor: pointer;
   }}
@@ -180,8 +179,8 @@ html, body, .stApp {{
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #c9cbd3;
-    box-shadow: 0 0 6px rgba(200,200,200,.6);
+    background: #b71c1c; /* thumb (red like active lyric button) */
+    box-shadow: 0 0 6px rgba(183,28,28,.6);
     transition: transform 0.2s ease;
   }}
   .slider::-webkit-slider-thumb:hover {{
@@ -191,8 +190,8 @@ html, body, .stApp {{
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #c9cbd3;
-    box-shadow: 0 0 6px rgba(200,200,200,.6);
+    background: #b71c1c;
+    box-shadow: 0 0 6px rgba(183,28,28,.6);
     cursor: pointer;
   }}
 
@@ -257,7 +256,6 @@ html, body, .stApp {{
       if (playing) ws.play();
       updateTime();
       ws.setVolume(parseFloat(volSlider.value)); // sync volume
-      updateSliderGradient(volSlider.value);
     }});
     currentIdx = idx;
     current = label;
@@ -273,7 +271,6 @@ html, body, .stApp {{
   ws.on('ready', () => {{
     updateTime();
     ws.setVolume(parseFloat(volSlider.value)); // initial volume
-    updateSliderGradient(volSlider.value);
   }});
   ws.on('audioprocess', updateTime);
 
@@ -282,18 +279,9 @@ html, body, .stApp {{
   ws.on('play', () => {{ playBtn.textContent = '⏸'; playBtn.classList.add('pause'); }});
   ws.on('pause', () => {{ playBtn.textContent = '▶'; playBtn.classList.remove('pause'); }});
 
-  // Update slider gradient
-  function updateSliderGradient(value) {{
-    const percent = value * 100;
-    volSlider.style.background =
-      `linear-gradient(to right, #5f6bff ${{percent}}%, #c9cbd3 ${{percent}}%)`;
-  }}
-
   // Volume slider
   volSlider.addEventListener('input', e => {{
-    const val = parseFloat(e.target.value);
-    ws.setVolume(val);
-    updateSliderGradient(val);
+    ws.setVolume(parseFloat(e.target.value));
   }});
 
   // Click knob cycles A→B→C
@@ -312,4 +300,4 @@ html, body, .stApp {{
 </script>
 """
 
-st.components.v1.html(html, height=980)
+st.components.v1.html(html, height=950)
