@@ -66,7 +66,8 @@ html = f"""
 </div>
 
 <!-- Volume slider -->
-<div style="text-align:center; margin-top:20px;">
+<div style="text-align:center; margin-top:20px; display:flex; justify-content:center; align-items:center; gap:10px;">
+  <span style="color:#ccc; font-size:18px;">🔊</span>
   <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider">
 </div>
 
@@ -140,7 +141,7 @@ html, body, .stApp {{
     left: 50%;
     translate: -50% 0;
     box-shadow: 0 0 8px rgba(255,255,255,.35);
-    transition: transform 0.4s ease; /* smooth motion */
+    transition: transform 0.4s ease;
   }}
 
   .label {{
