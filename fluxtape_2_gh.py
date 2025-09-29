@@ -1,9 +1,6 @@
 import streamlit as st
 import base64
 
-
-#do you see the changes
-
 st.set_page_config(layout="wide")
 
 st.markdown("""
@@ -50,6 +47,7 @@ html = f"""
   <button id="playBtn" class="play-btn">▶</button>
 </div>
 
+<!-- Waveform -->
 <div id="waveform" style="margin:25px auto; width:85%;"></div>
 
 <!-- Time counter -->
@@ -62,6 +60,9 @@ html = f"""
   <div style="color:#c9cbd3; font-size:20px; margin-bottom:6px;">🔊</div>
   <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider">
 </div>
+
+<!-- Spectrogram -->
+<div id="spectrogram" style="width:85%; margin:18px auto 8px auto;"></div>
 
 <!-- Knob + orbiting labels -->
 <div class="knob-wrap">
@@ -196,13 +197,20 @@ html, body, .stApp {{
     cursor: pointer;
   }}
 
+  /* Spectrogram minor polish */
+  #spectrogram canvas {{
+    border-radius: 8px;
+  }}
+
   /* Positions: A=9pm, B=12, C=3pm */
   .labelA {{ top: 50%; left: -40px; transform: translateY(-50%); }}
   .labelB {{ top: -20px; left: 50%; transform: translateX(-50%); }}
   .labelC {{ top: 50%; right: -40px; transform: translateY(-50%); }}
 </style>
 
+<!-- Wavesurfer core + spectrogram plugin -->
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/spectrogram.min.js"></script>
 
 <script>
   const audioMap = {audio_map};
@@ -217,6 +225,16 @@ html, body, .stApp {{
     backend: 'WebAudio',
     cursorWidth: 2,
   }});
+
+  // Spectrogram plugin (live analyzer view)
+  const spectro = ws.registerPlugin(WaveSurfer.Spectrogram.create({{
+    container: '#spectrogram',
+    height: 160,
+    labels: true,
+    frequencyMin: 40,     // hide very-low rumble
+    frequencyMax: 12000,  // focus on voice/music band
+    // colorMap: undefined // default colormap looks nice; we can customize later
+  }}));
 
   let currentIdx = 0;
   let current = labels[currentIdx];
@@ -245,6 +263,12 @@ html, body, .stApp {{
 
   function setPointer(idx) {{
     pointer.style.transform = 'translate(-50%, 0) rotate(' + angles[idx] + 'deg)';
+  }}
+
+  function updateSliderGradient(value) {{
+    const percent = value * 100;
+    volSlider.style.background =
+      `linear-gradient(to right, #5f6bff ${{percent}}%, #c9cbd3 ${{percent}}%)`;
   }}
 
   function loadVersion(idx, keepTime=true) {{
@@ -282,13 +306,6 @@ html, body, .stApp {{
   ws.on('play', () => {{ playBtn.textContent = '⏸'; playBtn.classList.add('pause'); }});
   ws.on('pause', () => {{ playBtn.textContent = '▶'; playBtn.classList.remove('pause'); }});
 
-  // Update slider gradient
-  function updateSliderGradient(value) {{
-    const percent = value * 100;
-    volSlider.style.background =
-      `linear-gradient(to right, #5f6bff ${{percent}}%, #c9cbd3 ${{percent}}%)`;
-  }}
-
   // Volume slider
   volSlider.addEventListener('input', e => {{
     const val = parseFloat(e.target.value);
@@ -312,4 +329,4 @@ html, body, .stApp {{
 </script>
 """
 
-st.components.v1.html(html, height=980)
+st.components.v1.html(html, height=1150)
