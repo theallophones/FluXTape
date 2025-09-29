@@ -57,18 +57,6 @@ html = f"""
   0:00 / 0:00
 </div>
 
-<div id="waveform" style="margin:25px auto; width:85%;"></div>
-
-<!-- Time counter -->
-<div id="time-display" style="text-align:center; margin-top:6px; color:#ccc; font-family:sans-serif; font-size:14px;">
-  0:00 / 0:00
-</div>
-
-<!-- Spectrum Analyzer -->
-<canvas id="spectrum" width="800" height="150"
-  style="display:block; margin:20px auto; background:#1a1d25; border-radius:8px;">
-</canvas>
-
 <!-- Volume control -->
 <div style="text-align:center; margin:18px 0;">
   <div style="color:#c9cbd3; font-size:20px; margin-bottom:6px;">🔊</div>
@@ -320,11 +308,7 @@ html, body, .stApp {{
       const idx = parseInt(el.getAttribute('data-idx'));
       if (idx !== currentIdx) loadVersion(idx);
     }});
-    
   }});
-  
-  
-  
 </script>
 """
 
