@@ -375,35 +375,57 @@ html = f"""
   const versionDisplay = document.getElementById('currentVersion');
   const eqBars = Array.from(document.querySelectorAll('.eq-bar'));
 
-  let audioContext, analyser, dataArray, bufferLength;
+  let analyser, dataArray, bufferLength;
   let animationId;
+  let analyserInitialized = false;
 
   function initAudioAnalyser() {
-    if (!audioContext) {
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    if (analyserInitialized) return;
+    
+    try {
+      // Get WaveSurfer's backend audio context
+      const backend = ws.backend;
+      if (!backend || !backend.ac) {
+        console.warn('Audio context not ready yet');
+        return;
+      }
+      
+      const audioContext = backend.ac;
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 64;
       bufferLength = analyser.frequencyBinCount;
       dataArray = new Uint8Array(bufferLength);
       
-      const source = audioContext.createMediaElementSource(ws.getMediaElement());
-      source.connect(analyser);
-      analyser.connect(audioContext.destination);
+      // Connect to WaveSurfer's analyser
+      if (backend.analyser) {
+        backend.analyser.connect(analyser);
+        analyser.connect(audioContext.destination);
+        analyserInitialized = true;
+      }
+    } catch (err) {
+      console.error('Error initializing analyser:', err);
     }
   }
 
   function animateEQ() {
-    if (!analyser) return;
+    if (!analyser || !analyserInitialized) {
+      animationId = requestAnimationFrame(animateEQ);
+      return;
+    }
     
-    analyser.getByteFrequencyData(dataArray);
-    
-    // Map frequency data to bars
-    eqBars.forEach((bar, i) => {
-      const dataIndex = Math.floor(i * bufferLength / eqBars.length);
-      const value = dataArray[dataIndex] || 0;
-      const height = Math.max(10, (value / 255) * 100);
-      bar.style.height = height + '%';
-    });
+    try {
+      analyser.getByteFrequencyData(dataArray);
+      
+      // Map frequency data to bars
+      eqBars.forEach((bar, i) => {
+        const dataIndex = Math.floor(i * bufferLength / eqBars.length);
+        const value = dataArray[dataIndex] || 0;
+        const height = Math.max(10, (value / 255) * 100);
+        bar.style.height = height + '%';
+      });
+    } catch (err) {
+      console.error('EQ animation error:', err);
+    }
     
     animationId = requestAnimationFrame(animateEQ);
   }
@@ -422,7 +444,7 @@ html = f"""
   function formatTime(sec) {{
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60).toString().padStart(2, '0');
-    return `${{m}}:${{s}}`;
+    return m + ':' + s;
   }}
 
   function updateTime() {{
@@ -483,8 +505,7 @@ html = f"""
   // Update slider gradient
   function updateSliderGradient(value) {{
     const percent = value * 100;
-    volSlider.style.background =
-      `linear-gradient(to right, #5f6bff ${{percent}}%, #3a4150 ${{percent}}%)`;
+    volSlider.style.background = 'linear-gradient(to right, #5f6bff ' + percent + '%, #3a4150 ' + percent + '%)';
   }}
 
   // Volume slider
