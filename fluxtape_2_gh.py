@@ -60,6 +60,9 @@ html = f"""
   <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider">
 </div>
 
+<!-- EQ-style visualizer -->
+<canvas id="eqVis" width="600" height="120" style="display:block; margin:20px auto;"></canvas>
+
 <!-- Knob + orbiting labels -->
 <div class="knob-wrap">
   <div id="knob" class="knob" title="Click to switch Lyrics version">
@@ -141,7 +144,7 @@ html, body, .stApp {{
     left: 50%;
     translate: -50% 0;
     box-shadow: 0 0 8px rgba(255,255,255,.35);
-    transition: transform 0.4s ease; /* smooth motion */
+    transition: transform 0.4s ease;
   }}
 
   .label {{
@@ -177,7 +180,7 @@ html, body, .stApp {{
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #c9cbd3;
+    background: #cfd8dc;
     box-shadow: 0 0 6px rgba(200,200,200,.6);
     transition: transform 0.2s ease;
   }}
@@ -188,7 +191,7 @@ html, body, .stApp {{
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #c9cbd3;
+    background: #cfd8dc;
     box-shadow: 0 0 6px rgba(200,200,200,.6);
     cursor: pointer;
   }}
@@ -214,6 +217,33 @@ html, body, .stApp {{
     backend: 'WebAudio',
     cursorWidth: 2,
   }});
+
+  // Analyzer node for visualizer
+  const analyser = ws.backend.ac.createAnalyser();
+  analyser.fftSize = 128;
+  ws.backend.setFilter(analyser);
+
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+
+  const canvas = document.getElementById("eqVis");
+  const ctx = canvas.getContext("2d");
+
+  function draw() {{
+    requestAnimationFrame(draw);
+    analyser.getByteFrequencyData(dataArray);
+    ctx.fillStyle = "#0f1115";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const barWidth = (canvas.width / bufferLength) * 2.5;
+    let x = 0;
+    for (let i = 0; i < bufferLength; i++) {{
+      const barHeight = dataArray[i] / 2;
+      ctx.fillStyle = "#5f6bff";
+      ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+      x += barWidth + 1;
+    }}
+  }}
+  draw();
 
   let currentIdx = 0;
   let current = labels[currentIdx];
@@ -244,6 +274,12 @@ html, body, .stApp {{
     pointer.style.transform = 'translate(-50%, 0) rotate(' + angles[idx] + 'deg)';
   }}
 
+  function updateSliderGradient(value) {{
+    const percent = value * 100;
+    volSlider.style.background =
+      `linear-gradient(to right, #5f6bff ${{percent}}%, #c9cbd3 ${{percent}}%)`;
+  }}
+
   function loadVersion(idx, keepTime=true) {{
     const label = labels[idx];
     const t = ws.getCurrentTime();
@@ -253,8 +289,8 @@ html, body, .stApp {{
       if (keepTime) ws.setTime(Math.min(t, ws.getDuration()-0.01));
       if (playing) ws.play();
       updateTime();
-      ws.setVolume(parseFloat(volSlider.value)); // sync volume
       updateSliderGradient(volSlider.value);
+      ws.setVolume(parseFloat(volSlider.value));
     }});
     currentIdx = idx;
     current = label;
@@ -269,8 +305,8 @@ html, body, .stApp {{
 
   ws.on('ready', () => {{
     updateTime();
-    ws.setVolume(parseFloat(volSlider.value)); // initial volume
     updateSliderGradient(volSlider.value);
+    ws.setVolume(parseFloat(volSlider.value));
   }});
   ws.on('audioprocess', updateTime);
 
@@ -278,13 +314,6 @@ html, body, .stApp {{
   playBtn.addEventListener('click', () => ws.playPause());
   ws.on('play', () => {{ playBtn.textContent = '⏸'; playBtn.classList.add('pause'); }});
   ws.on('pause', () => {{ playBtn.textContent = '▶'; playBtn.classList.remove('pause'); }});
-
-  // Update slider gradient
-  function updateSliderGradient(value) {{
-    const percent = value * 100;
-    volSlider.style.background =
-      `linear-gradient(to right, #5f6bff ${{percent}}%, #c9cbd3 ${{percent}}%)`;
-  }}
 
   // Volume slider
   volSlider.addEventListener('input', e => {{
@@ -309,4 +338,4 @@ html, body, .stApp {{
 </script>
 """
 
-st.components.v1.html(html, height=980)
+st.components.v1.html(html, height=1100)
