@@ -73,22 +73,6 @@ html = f"""
 
 <div id="waveform" style="margin:30px auto; width:90%; max-width:1200px;"></div>
 
-<!-- EQ Visualizer -->
-<div id="eq-visualizer" style="display:flex; justify-content:center; align-items:flex-end; gap:4px; height:80px; margin:20px auto; max-width:400px;">
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:20%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:40%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:60%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:80%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:50%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:70%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:35%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:55%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:45%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:65%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:30%;"></div>
-  <div class="eq-bar" style="width:12px; background:linear-gradient(to top, #5f6bff, #8b9dff); border-radius:6px 6px 0 0; height:50%;"></div>
-</div>
-
 <!-- Time counter and speed control -->
 <div style="display:flex; justify-content:center; align-items:center; gap:25px; margin-top:12px;">
   <div id="time-display" style="color:#8b92a8; font-family:'Inter', sans-serif; font-size:15px; font-weight:500; min-width:100px; text-align:right;">
@@ -373,73 +357,6 @@ html = f"""
   const volSlider = document.getElementById('volumeSlider');
   const speedSelect = document.getElementById('speedSelect');
   const versionDisplay = document.getElementById('currentVersion');
-  const eqBars = Array.from(document.querySelectorAll('.eq-bar'));
-
-  let analyser, dataArray, bufferLength;
-  let animationId;
-  let analyserInitialized = false;
-
-  function initAudioAnalyser() {
-    if (analyserInitialized) return;
-    
-    try {
-      // Get WaveSurfer's backend audio context
-      const backend = ws.backend;
-      if (!backend || !backend.ac) {
-        console.warn('Audio context not ready yet');
-        return;
-      }
-      
-      const audioContext = backend.ac;
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 64;
-      bufferLength = analyser.frequencyBinCount;
-      dataArray = new Uint8Array(bufferLength);
-      
-      // Connect to WaveSurfer's analyser
-      if (backend.analyser) {
-        backend.analyser.connect(analyser);
-        analyser.connect(audioContext.destination);
-        analyserInitialized = true;
-      }
-    } catch (err) {
-      console.error('Error initializing analyser:', err);
-    }
-  }
-
-  function animateEQ() {
-    if (!analyser || !analyserInitialized) {
-      animationId = requestAnimationFrame(animateEQ);
-      return;
-    }
-    
-    try {
-      analyser.getByteFrequencyData(dataArray);
-      
-      // Map frequency data to bars
-      eqBars.forEach((bar, i) => {
-        const dataIndex = Math.floor(i * bufferLength / eqBars.length);
-        const value = dataArray[dataIndex] || 0;
-        const height = Math.max(10, (value / 255) * 100);
-        bar.style.height = height + '%';
-      });
-    } catch (err) {
-      console.error('EQ animation error:', err);
-    }
-    
-    animationId = requestAnimationFrame(animateEQ);
-  }
-
-  function stopEQ() {
-    if (animationId) {
-      cancelAnimationFrame(animationId);
-      animationId = null;
-    }
-    // Reset bars to default state
-    eqBars.forEach((bar, i) => {
-      bar.style.height = [20, 40, 60, 80, 50, 70, 35, 55, 45, 65, 30, 50][i] + '%';
-    });
-  }
 
   function formatTime(sec) {{
     const m = Math.floor(sec / 60);
