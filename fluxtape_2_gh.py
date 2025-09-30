@@ -64,7 +64,7 @@ html = f"""
     FluX-Tape
   </h1>
   <h3 style="font-family:'Inter', sans-serif; font-weight:400; color:#8b92a8; font-size:16px; margin-top:0; letter-spacing:0.5px;">
-    Switch Between Lyrics Versions Seamlessly
+	Explore Alternate Takes Instantly
   </h3>
   <div style="margin-top:15px;">
     <button id="playBtn" class="play-btn" title="Play/Pause (Space)">▶</button>
@@ -321,7 +321,7 @@ html = f"""
 
   /* Positions: A=9pm, B=12, C=3pm */
   .labelA {{ top: 50%; left: -50px; }}
-  .labelB {{ top: -40px; left: 50%; }}
+  .labelB {{ top: -1px; left: 50%; }}
   .labelC {{ top: 50%; right: -50px; }}
   
   /* Fixed transforms to prevent movement */
