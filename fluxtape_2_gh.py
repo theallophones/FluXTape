@@ -264,9 +264,13 @@ html = f"""
   }}
   .label:hover {{ 
     background: #3a4150; 
-    transform: scale(1.05) translateY(-50%);
     border-color: #4a5160;
   }}
+  
+  .labelA:hover {{ transform: translateY(-50%) scale(1.05); }}
+  .labelB:hover {{ transform: translateX(-50%) scale(1.05); }}
+  .labelC:hover {{ transform: translateY(-50%) scale(1.05); }}
+  
   .label.active {{
     background: #b71c1c;
     box-shadow: 0 0 20px rgba(183,28,28,1), 0 4px 12px rgba(183,28,28,0.6);
@@ -316,9 +320,14 @@ html = f"""
   }}
 
   /* Positions: A=9pm, B=12, C=3pm */
-  .labelA {{ top: 50%; left: -50px; transform: translateY(-50%); }}
-  .labelB {{ top: -25px; left: 50%; transform: translateX(-50%); }}
-  .labelC {{ top: 50%; right: -50px; transform: translateY(-50%); }}
+  .labelA {{ top: 50%; left: -50px; }}
+  .labelB {{ top: -40px; left: 50%; }}
+  .labelC {{ top: 50%; right: -50px; }}
+  
+  /* Fixed transforms to prevent movement */
+  .labelA {{ transform: translateY(-50%); }}
+  .labelB {{ transform: translateX(-50%); }}
+  .labelC {{ transform: translateY(-50%); }}
   
   .labelA.active {{ transform: translateY(-50%) scale(1.1); }}
   .labelB.active {{ transform: translateX(-50%) scale(1.1); }}
@@ -416,8 +425,14 @@ html = f"""
 
   // Play/pause
   playBtn.addEventListener('click', () => ws.playPause());
-  ws.on('play', () => {{ playBtn.textContent = '⏸'; playBtn.classList.add('pause'); }});
-  ws.on('pause', () => {{ playBtn.textContent = '▶'; playBtn.classList.remove('pause'); }});
+  ws.on('play', () => {{ 
+    playBtn.textContent = '⏸'; 
+    playBtn.classList.add('pause');
+  }});
+  ws.on('pause', () => {{ 
+    playBtn.textContent = '▶'; 
+    playBtn.classList.remove('pause');
+  }});
 
   // Update slider gradient
   function updateSliderGradient(value) {{
