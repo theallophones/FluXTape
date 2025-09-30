@@ -22,7 +22,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- Audio files (must sit next to this script) ---
+# --- Audio files ---
 audio_files = {
     "A": "H1A.mp3",
     "B": "H1B.mp3",
@@ -60,7 +60,7 @@ html = f"""
   <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider">
 </div>
 
-<!-- EQ-style visualizer -->
+<!-- Visualizer -->
 <canvas id="eqVis" width="600" height="120" style="display:block; margin:20px auto;"></canvas>
 
 <!-- Knob + orbiting labels -->
@@ -75,17 +75,6 @@ html = f"""
 </div>
 
 <style>
-  :root {{
-    --bg: #0f1115;
-    --accent: #4CAF50;
-    --text: #ffffff;
-  }}
-html, body, .stApp {{
-  height: 100%;
-  margin: 0;
-  background: linear-gradient(160deg, #0f1115 0%, #1a1d25 100%);
-}}
-
   .play-btn {{
     width: 82px;
     height: 82px;
@@ -94,16 +83,14 @@ html, body, .stApp {{
     font-size: 34px;
     cursor: pointer;
     color: #fff;
-    background: var(--accent);
+    background: #4CAF50;
     transition: background 0.25s ease, transform 0.2s ease, box-shadow .3s ease;
     box-shadow: 0 6px 20px rgba(76,175,80,.4);
   }}
-  .play-btn:hover {{ transform: scale(1.1); }}
   .play-btn.pause {{
     background: #FBC02D;
     box-shadow: 0 6px 20px rgba(251,192,45,.4);
   }}
-
   .knob-wrap {{
     position: relative;
     width: 260px;
@@ -113,7 +100,6 @@ html, body, .stApp {{
     align-items: center;
     justify-content: center;
   }}
-
   .knob {{
     width: 160px;
     height: 160px;
@@ -146,11 +132,10 @@ html, body, .stApp {{
     box-shadow: 0 0 8px rgba(255,255,255,.35);
     transition: transform 0.4s ease;
   }}
-
   .label {{
     position: absolute;
     background: #2a2f3a;
-    color: var(--text);
+    color: #ffffff;
     padding: 7px 14px;
     border-radius: 14px;
     font-family: sans-serif;
@@ -158,13 +143,10 @@ html, body, .stApp {{
     cursor: pointer;
     transition: background .25s ease, box-shadow .25s ease;
   }}
-  .label:hover {{ background: #3a4150; }}
   .label.active {{
     background: #b71c1c;
     box-shadow: 0 0 14px rgba(183,28,28,0.9);
   }}
-
-  /* Volume slider styling */
   .slider {{
     -webkit-appearance: none;
     width: 260px;
@@ -172,34 +154,7 @@ html, body, .stApp {{
     border-radius: 3px;
     background: linear-gradient(to right, #5f6bff 100%, #c9cbd3 0%);
     outline: none;
-    cursor: pointer;
   }}
-  .slider::-webkit-slider-thumb {{
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #cfd8dc;
-    box-shadow: 0 0 6px rgba(200,200,200,.6);
-    transition: transform 0.2s ease;
-  }}
-  .slider::-webkit-slider-thumb:hover {{
-    transform: scale(1.2);
-  }}
-  .slider::-moz-range-thumb {{
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #cfd8dc;
-    box-shadow: 0 0 6px rgba(200,200,200,.6);
-    cursor: pointer;
-  }}
-
-  /* Positions: A=9pm, B=12, C=3pm */
-  .labelA {{ top: 50%; left: -40px; transform: translateY(-50%); }}
-  .labelB {{ top: -20px; left: 50%; transform: translateX(-50%); }}
-  .labelC {{ top: 50%; right: -40px; transform: translateY(-50%); }}
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
@@ -218,14 +173,15 @@ html, body, .stApp {{
     cursorWidth: 2,
   }});
 
-  // Analyzer node for visualizer
-  const analyser = ws.backend.ac.createAnalyser();
+  // Analyzer for visualizer
+  let analyser = ws.backend.ac.createAnalyser();
   analyser.fftSize = 128;
-  ws.backend.setFilter(analyser);
+  let source = ws.backend.bufferSource || ws.backend.mediaElement;
+  ws.backend.gainNode.connect(analyser);
+  analyser.connect(ws.backend.ac.destination);
 
   const bufferLength = analyser.frequencyBinCount;
   const dataArray = new Uint8Array(bufferLength);
-
   const canvas = document.getElementById("eqVis");
   const ctx = canvas.getContext("2d");
 
@@ -259,27 +215,22 @@ html, body, .stApp {{
     const s = Math.floor(sec % 60).toString().padStart(2, '0');
     return `${{m}}:${{s}}`;
   }}
-
   function updateTime() {{
     const cur = ws.getCurrentTime();
     const total = ws.getDuration();
     timeDisplay.textContent = formatTime(cur) + ' / ' + formatTime(total);
   }}
-
   function setLabelActive(idx) {{
     labelEls.forEach((el,i)=> el.classList.toggle('active', i===idx));
   }}
-
   function setPointer(idx) {{
     pointer.style.transform = 'translate(-50%, 0) rotate(' + angles[idx] + 'deg)';
   }}
-
   function updateSliderGradient(value) {{
     const percent = value * 100;
     volSlider.style.background =
       `linear-gradient(to right, #5f6bff ${{percent}}%, #c9cbd3 ${{percent}}%)`;
   }}
-
   function loadVersion(idx, keepTime=true) {{
     const label = labels[idx];
     const t = ws.getCurrentTime();
@@ -302,7 +253,6 @@ html, body, .stApp {{
   ws.load(audioMap[current]);
   setPointer(currentIdx);
   setLabelActive(currentIdx);
-
   ws.on('ready', () => {{
     updateTime();
     updateSliderGradient(volSlider.value);
@@ -315,20 +265,18 @@ html, body, .stApp {{
   ws.on('play', () => {{ playBtn.textContent = '⏸'; playBtn.classList.add('pause'); }});
   ws.on('pause', () => {{ playBtn.textContent = '▶'; playBtn.classList.remove('pause'); }});
 
-  // Volume slider
+  // Volume
   volSlider.addEventListener('input', e => {{
     const val = parseFloat(e.target.value);
     ws.setVolume(val);
     updateSliderGradient(val);
   }});
 
-  // Click knob cycles A→B→C
+  // Knob cycling
   document.getElementById('knob').addEventListener('click', () => {{
     const next = (currentIdx + 1) % 3;
     loadVersion(next);
   }});
-
-  // Click labels directly
   labelEls.forEach(el => {{
     el.addEventListener('click', () => {{
       const idx = parseInt(el.getAttribute('data-idx'));
