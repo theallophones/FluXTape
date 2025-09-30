@@ -1,6 +1,9 @@
 import streamlit as st
 import base64
 
+
+#do you see the changes
+
 st.set_page_config(layout="wide")
 
 st.markdown("""
@@ -54,15 +57,6 @@ html = f"""
   0:00 / 0:00
 </div>
 
-<!-- Volume control -->
-<div style="text-align:center; margin:18px 0;">
-  <div style="color:#c9cbd3; font-size:20px; margin-bottom:6px;">🔊</div>
-  <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider">
-</div>
-
-<!-- EQ-style visualizer -->
-<canvas id="eqVis" width="600" height="120" style="display:block; margin:20px auto;"></canvas>
-
 <!-- Knob + orbiting labels -->
 <div class="knob-wrap">
   <div id="knob" class="knob" title="Click to switch Lyrics version">
@@ -72,6 +66,11 @@ html = f"""
   <div class="label labelA" data-idx="0">Lyrics A</div>
   <div class="label labelB" data-idx="1">Lyrics B</div>
   <div class="label labelC" data-idx="2">Lyrics C</div>
+</div>
+
+<!-- Volume slider -->
+<div style="text-align:center; margin-top:20px;">
+  <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" style="width:200px;">
 </div>
 
 <style>
@@ -108,7 +107,7 @@ html, body, .stApp {{
     position: relative;
     width: 260px;
     height: 260px;
-    margin: 40px auto;
+    margin: 50px auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -144,7 +143,7 @@ html, body, .stApp {{
     left: 50%;
     translate: -50% 0;
     box-shadow: 0 0 8px rgba(255,255,255,.35);
-    transition: transform 0.4s ease;
+    transition: transform 0.4s ease; /* smooth motion */
   }}
 
   .label {{
@@ -162,38 +161,6 @@ html, body, .stApp {{
   .label.active {{
     background: #b71c1c;
     box-shadow: 0 0 14px rgba(183,28,28,0.9);
-  }}
-
-  /* Volume slider styling */
-  .slider {{
-    -webkit-appearance: none;
-    width: 260px;
-    height: 6px;
-    border-radius: 3px;
-    background: linear-gradient(to right, #5f6bff 100%, #c9cbd3 0%);
-    outline: none;
-    cursor: pointer;
-  }}
-  .slider::-webkit-slider-thumb {{
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #cfd8dc;
-    box-shadow: 0 0 6px rgba(200,200,200,.6);
-    transition: transform 0.2s ease;
-  }}
-  .slider::-webkit-slider-thumb:hover {{
-    transform: scale(1.2);
-  }}
-  .slider::-moz-range-thumb {{
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #cfd8dc;
-    box-shadow: 0 0 6px rgba(200,200,200,.6);
-    cursor: pointer;
   }}
 
   /* Positions: A=9pm, B=12, C=3pm */
@@ -217,33 +184,6 @@ html, body, .stApp {{
     backend: 'WebAudio',
     cursorWidth: 2,
   }});
-
-  // Analyzer node for visualizer
-  const analyser = ws.backend.ac.createAnalyser();
-  analyser.fftSize = 128;
-  ws.backend.setFilter(analyser);
-
-  const bufferLength = analyser.frequencyBinCount;
-  const dataArray = new Uint8Array(bufferLength);
-
-  const canvas = document.getElementById("eqVis");
-  const ctx = canvas.getContext("2d");
-
-  function draw() {{
-    requestAnimationFrame(draw);
-    analyser.getByteFrequencyData(dataArray);
-    ctx.fillStyle = "#0f1115";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    const barWidth = (canvas.width / bufferLength) * 2.5;
-    let x = 0;
-    for (let i = 0; i < bufferLength; i++) {{
-      const barHeight = dataArray[i] / 2;
-      ctx.fillStyle = "#5f6bff";
-      ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-      x += barWidth + 1;
-    }}
-  }}
-  draw();
 
   let currentIdx = 0;
   let current = labels[currentIdx];
@@ -274,12 +214,6 @@ html, body, .stApp {{
     pointer.style.transform = 'translate(-50%, 0) rotate(' + angles[idx] + 'deg)';
   }}
 
-  function updateSliderGradient(value) {{
-    const percent = value * 100;
-    volSlider.style.background =
-      `linear-gradient(to right, #5f6bff ${{percent}}%, #c9cbd3 ${{percent}}%)`;
-  }}
-
   function loadVersion(idx, keepTime=true) {{
     const label = labels[idx];
     const t = ws.getCurrentTime();
@@ -289,8 +223,7 @@ html, body, .stApp {{
       if (keepTime) ws.setTime(Math.min(t, ws.getDuration()-0.01));
       if (playing) ws.play();
       updateTime();
-      updateSliderGradient(volSlider.value);
-      ws.setVolume(parseFloat(volSlider.value));
+      ws.setVolume(parseFloat(volSlider.value)); // ensure volume sync
     }});
     currentIdx = idx;
     current = label;
@@ -305,8 +238,7 @@ html, body, .stApp {{
 
   ws.on('ready', () => {{
     updateTime();
-    updateSliderGradient(volSlider.value);
-    ws.setVolume(parseFloat(volSlider.value));
+    ws.setVolume(parseFloat(volSlider.value)); // set initial volume
   }});
   ws.on('audioprocess', updateTime);
 
@@ -317,9 +249,7 @@ html, body, .stApp {{
 
   // Volume slider
   volSlider.addEventListener('input', e => {{
-    const val = parseFloat(e.target.value);
-    ws.setVolume(val);
-    updateSliderGradient(val);
+    ws.setVolume(parseFloat(e.target.value));
   }});
 
   // Click knob cycles A→B→C
@@ -338,4 +268,4 @@ html, body, .stApp {{
 </script>
 """
 
-st.components.v1.html(html, height=1100)
+st.components.v1.html(html, height=900)
