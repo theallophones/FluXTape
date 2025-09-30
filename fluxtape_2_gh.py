@@ -73,6 +73,22 @@ html = f"""
 
 <div id="waveform" style="margin:30px auto; width:90%; max-width:1200px;"></div>
 
+<!-- Simple Visual Equalizer -->
+<div class="visualizer-container paused">
+  <div class="vis-bar" style="animation-delay: 0s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.1s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.2s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.15s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.05s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.25s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.3s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.12s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.18s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.08s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.22s;"></div>
+  <div class="vis-bar" style="animation-delay: 0.28s;"></div>
+</div>
+
 <!-- Time counter and speed control -->
 <div style="display:flex; justify-content:center; align-items:center; gap:25px; margin-top:12px;">
   <div id="time-display" style="color:#8b92a8; font-family:'Inter', sans-serif; font-size:15px; font-weight:500; min-width:100px; text-align:right;">
@@ -332,6 +348,49 @@ html = f"""
   .labelA.active {{ transform: translateY(-50%) scale(1.1); }}
   .labelB.active {{ transform: translateX(-50%) scale(1.1); }}
   .labelC.active {{ transform: translateY(-50%) scale(1.1); }}
+
+  /* Visual Equalizer */
+  .visualizer-container {{
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 6px;
+    height: 100px;
+    margin: 25px auto;
+    max-width: 400px;
+    padding: 0 20px;
+  }}
+  
+  .vis-bar {{
+    width: 14px;
+    background: linear-gradient(to top, #5f6bff, #8b9dff);
+    border-radius: 8px 8px 0 0;
+    height: 20%;
+    box-shadow: 0 0 15px rgba(95, 107, 255, 0.5);
+    animation: pulse 0.8s ease-in-out infinite alternate;
+    transition: opacity 0.3s ease;
+  }}
+  
+  @keyframes pulse {{
+    0% {{
+      height: 15%;
+      opacity: 0.6;
+    }}
+    50% {{
+      height: 75%;
+      opacity: 1;
+    }}
+    100% {{
+      height: 30%;
+      opacity: 0.7;
+    }}
+  }}
+  
+  .visualizer-container.paused .vis-bar {{
+    animation: none;
+    height: 20%;
+    opacity: 0.3;
+  }}
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
@@ -366,6 +425,7 @@ html = f"""
   const volSlider = document.getElementById('volumeSlider');
   const speedSelect = document.getElementById('speedSelect');
   const versionDisplay = document.getElementById('currentVersion');
+  const visualizer = document.querySelector('.visualizer-container');
 
   function formatTime(sec) {{
     const m = Math.floor(sec / 60);
@@ -421,6 +481,7 @@ html = f"""
   ws.on('finish', () => {{
     playBtn.textContent = '▶';
     playBtn.classList.remove('pause');
+    visualizer.classList.add('paused');
   }});
 
   // Play/pause
@@ -428,10 +489,12 @@ html = f"""
   ws.on('play', () => {{ 
     playBtn.textContent = '⏸'; 
     playBtn.classList.add('pause');
+    visualizer.classList.remove('paused');
   }});
   ws.on('pause', () => {{ 
     playBtn.textContent = '▶'; 
     playBtn.classList.remove('pause');
+    visualizer.classList.add('paused');
   }});
 
   // Update slider gradient
