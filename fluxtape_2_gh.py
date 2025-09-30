@@ -321,7 +321,7 @@ html = f"""
 
   /* Positions: A=9pm, B=12, C=3pm */
   .labelA {{ top: 50%; left: -50px; }}
-  .labelB {{ top: 50%; left: 50%; }}
+  .labelB {{ top: -1px; left: 50%; }}
   .labelC {{ top: 50%; right: -50px; }}
   
   /* Fixed transforms to prevent movement */
