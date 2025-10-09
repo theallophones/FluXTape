@@ -3,7 +3,6 @@ import base64
 import os
 
 
-#already pushing
 
 st.set_page_config(layout="wide", page_title="FluXTape", page_icon="🎵")
 
@@ -32,9 +31,9 @@ footer {visibility: hidden;}
 
 # --- Audio files (must sit next to this script) ---
 audio_files = {
-    "A": "H1A.mp3",
-    "B": "H1B.mp3",
-    "C": "H1C.mp3",
+    "A": "lyricsA.mp3",
+    "B": "lyricsB.mp3",
+    "C": "lyricsC.mp3",
 }
 
 def file_to_data_url(path, mime="audio/mpeg"):
