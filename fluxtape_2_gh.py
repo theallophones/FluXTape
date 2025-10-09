@@ -474,7 +474,7 @@ html = f"""
 
 <script>
   const audioMap = {audio_map};
-  const lyricsLabels = ["A","B","C"];
+  const lyricsOptions = ["A","B","C"];
   const lyricsAngles = [270, 0, 90];
 
   // Create WaveSurfer instances for all stems
@@ -523,7 +523,7 @@ html = f"""
   // UI Elements
   const playBtn = document.getElementById('playBtn');
   const lyricsPointer = document.getElementById('lyricsPointer');
-  const lyricsLabels = Array.from(document.querySelectorAll('.label-small'));
+  const lyricsLabelEls = Array.from(document.querySelectorAll('.label-small'));
   const timeDisplay = document.getElementById('time-display');
   const volSlider = document.getElementById('volumeSlider');
   const speedSelect = document.getElementById('speedSelect');
@@ -632,8 +632,12 @@ html = f"""
     visualizer.classList.add('paused');
   }});
 
+  console.log('Play button:', playBtn);
+  console.log('Lyrics labels:', lyricsLabelEls);
+
   // Play/Pause
   playBtn.addEventListener('click', () => {{
+    console.log('Play button clicked, isPlaying:', isPlaying);
     if (isPlaying) {{
       pauseAll();
       playBtn.textContent = '▶';
@@ -649,13 +653,13 @@ html = f"""
 
   // Lyrics Control
   function setLyricsActive(idx) {{
-    lyricsLabels.forEach((el,i)=> el.classList.toggle('active', i===idx));
+    lyricsLabelEls.forEach((el,i)=> el.classList.toggle('active', i===idx));
     lyricsPointer.style.transform = 'translate(-50%, 0) rotate(' + lyricsAngles[idx] + 'deg)';
-    lyricsDisplay.textContent = 'Lyrics ' + ['A','B','C'][idx];
+    lyricsDisplay.textContent = 'Lyrics ' + lyricsOptions[idx];
   }}
 
   function switchLyrics(idx) {{
-    const key = 'lyrics' + ['A','B','C'][idx];
+    const key = 'lyrics' + lyricsOptions[idx];
     loadStem(lyricsWS, key, 'lyrics', () => {{
       currentLyrics = idx;
       setLyricsActive(idx);
@@ -667,7 +671,7 @@ html = f"""
     switchLyrics(next);
   }});
 
-  lyricsLabels.forEach(el => {{
+  lyricsLabelEls.forEach(el => {{
     el.addEventListener('click', (e) => {{
       e.stopPropagation();
       const idx = parseInt(el.getAttribute('data-idx'));
