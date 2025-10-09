@@ -2,9 +2,7 @@ import streamlit as st
 import base64
 import os
 
-
-
-st.set_page_config(layout="wide", page_title="FluXTape", page_icon="🎵")
+st.set_page_config(layout="wide", page_title="FluXTape REF3", page_icon="🎵")
 
 st.markdown("""
 <style>
@@ -31,10 +29,10 @@ footer {visibility: hidden;}
 
 # --- Audio files (must sit next to this script) ---
 audio_files = {
-    "A": "lyricsA.mp3",
-    "B": "lyricsB.mp3",
-    "C": "lyricsC.mp3",
-    "groove": "groove.mp3"
+    "groove": "groove.mp3",
+    "lyricsA": "lyricsA.mp3",
+    "lyricsB": "lyricsB.mp3",
+    "lyricsC": "lyricsC.mp3",
 }
 
 def file_to_data_url(path, mime="audio/mpeg"):
@@ -57,17 +55,17 @@ for k, v in audio_files.items():
     if data_url:
         audio_map[k] = data_url
 
-if len(audio_map) == 0:
-    st.error("❌ No audio files could be loaded. Please ensure H1A.mp3, H1B.mp3, and H1C.mp3 are in the same directory as this script.")
+if len(audio_map) < 4:
+    st.error("❌ Not all audio files could be loaded. Please ensure groove.mp3, lyricsA.mp3, lyricsB.mp3, and lyricsC.mp3 are in the same directory as this script.")
     st.stop()
 
 html = f"""
 <div style="text-align:center; margin-bottom:10px;">
   <h1 style="font-family:'Inter', sans-serif; font-weight:800; color:#ffffff; font-size:48px; margin-bottom:5px; letter-spacing:-1px;">
-    FluX-Tape
+    FluX-Tape REF3
   </h1>
   <h3 style="font-family:'Inter', sans-serif; font-weight:400; color:#8b92a8; font-size:16px; margin-top:0; letter-spacing:0.5px;">
-	Songs as Probability Clouds
+	Multi-Stem Playback System
   </h3>
   <div style="margin-top:15px;">
     <button id="playBtn" class="play-btn" title="Play/Pause (Space)">▶</button>
@@ -401,9 +399,10 @@ html = f"""
 <script>
   const audioMap = {audio_map};
   const labels = ["A","B","C"];
-  const angles = [270, 0, 90]; // A=left, B=top, C=right
+  const angles = [270, 0, 90];
 
-  const ws = WaveSurfer.create({{
+  // Create two WaveSurfer instances
+  const grooveWS = WaveSurfer.create({{
     container: '#waveform',
     waveColor: '#4a5568',
     progressColor: '#5f6bff',
@@ -418,8 +417,20 @@ html = f"""
     normalize: true,
   }});
 
+  // Create a second instance for lyrics (hidden waveform)
+  const lyricsContainer = document.createElement('div');
+  lyricsContainer.style.display = 'none';
+  document.body.appendChild(lyricsContainer);
+  
+  const lyricsWS = WaveSurfer.create({{
+    container: lyricsContainer,
+    backend: 'WebAudio',
+  }});
+
   let currentIdx = 0;
-  let current = labels[currentIdx];
+  let isPlaying = false;
+  let isReady = false;
+  let lyricsReady = false;
 
   const playBtn = document.getElementById('playBtn');
   const pointer = document.getElementById('pointer');
@@ -437,8 +448,8 @@ html = f"""
   }}
 
   function updateTime() {{
-    const cur = ws.getCurrentTime();
-    const total = ws.getDuration();
+    const cur = grooveWS.getCurrentTime();
+    const total = grooveWS.getDuration();
     timeDisplay.textContent = formatTime(cur) + ' / ' + formatTime(total);
   }}
 
@@ -451,53 +462,96 @@ html = f"""
     pointer.style.transform = 'translate(-50%, 0) rotate(' + angles[idx] + 'deg)';
   }}
 
-  function loadVersion(idx, keepTime=true) {{
-    const label = labels[idx];
-    const t = ws.getCurrentTime();
-    const playing = ws.isPlaying();
-    ws.load(audioMap[label]);
-    ws.once('ready', () => {{
-      if (keepTime) ws.setTime(Math.min(t, ws.getDuration()-0.01));
-      if (playing) ws.play();
-      updateTime();
-      ws.setVolume(parseFloat(volSlider.value));
-      ws.setPlaybackRate(parseFloat(speedSelect.value));
-      updateSliderGradient(volSlider.value);
+  function syncPlayback() {{
+    if (isReady && lyricsReady && isPlaying) {{
+      grooveWS.play();
+      lyricsWS.play();
+    }}
+  }}
+
+  function pauseAll() {{
+    grooveWS.pause();
+    lyricsWS.pause();
+  }}
+
+  function playAll() {{
+    if (isReady && lyricsReady) {{
+      isPlaying = true;
+      grooveWS.play();
+      lyricsWS.play();
+    }}
+  }}
+
+  function loadLyrics(idx) {{
+    const key = 'lyrics' + labels[idx];
+    const currentTime = grooveWS.getCurrentTime();
+    const wasPlaying = isPlaying;
+    
+    if (wasPlaying) {{
+      pauseAll();
+    }}
+    
+    lyricsReady = false;
+    lyricsWS.load(audioMap[key]);
+    
+    lyricsWS.once('ready', () => {{
+      lyricsReady = true;
+      lyricsWS.setTime(Math.min(currentTime, lyricsWS.getDuration() - 0.01));
+      lyricsWS.setVolume(parseFloat(volSlider.value));
+      lyricsWS.setPlaybackRate(parseFloat(speedSelect.value));
+      
+      if (wasPlaying) {{
+        setTimeout(() => {{
+          playAll();
+        }}, 50);
+      }}
     }});
+    
     currentIdx = idx;
-    current = label;
     setPointer(idx);
     setLabelActive(idx);
   }}
 
-  // Init
-  ws.load(audioMap[current]);
-  setPointer(currentIdx);
-  setLabelActive(currentIdx);
+  // Load initial files
+  grooveWS.load(audioMap.groove);
+  lyricsWS.load(audioMap.lyricsA);
 
-  ws.on('ready', () => {{
+  grooveWS.on('ready', () => {{
+    isReady = true;
     updateTime();
-    ws.setVolume(parseFloat(volSlider.value));
+    grooveWS.setVolume(parseFloat(volSlider.value));
     updateSliderGradient(volSlider.value);
   }});
-  ws.on('audioprocess', updateTime);
-  ws.on('finish', () => {{
+
+  lyricsWS.on('ready', () => {{
+    lyricsReady = true;
+    lyricsWS.setVolume(parseFloat(volSlider.value));
+  }});
+
+  // Sync time display with groove track
+  grooveWS.on('audioprocess', updateTime);
+  
+  grooveWS.on('finish', () => {{
+    isPlaying = false;
     playBtn.textContent = '▶';
     playBtn.classList.remove('pause');
     visualizer.classList.add('paused');
   }});
 
-  // Play/pause
-  playBtn.addEventListener('click', () => ws.playPause());
-  ws.on('play', () => {{ 
-    playBtn.textContent = '⏸'; 
-    playBtn.classList.add('pause');
-    visualizer.classList.remove('paused');
-  }});
-  ws.on('pause', () => {{ 
-    playBtn.textContent = '▶'; 
-    playBtn.classList.remove('pause');
-    visualizer.classList.add('paused');
+  // Play/pause both tracks
+  playBtn.addEventListener('click', () => {{
+    if (isPlaying) {{
+      pauseAll();
+      isPlaying = false;
+      playBtn.textContent = '▶';
+      playBtn.classList.remove('pause');
+      visualizer.classList.add('paused');
+    }} else {{
+      playAll();
+      playBtn.textContent = '⏸';
+      playBtn.classList.add('pause');
+      visualizer.classList.remove('paused');
+    }}
   }});
 
   // Update slider gradient
@@ -506,22 +560,31 @@ html = f"""
     volSlider.style.background = 'linear-gradient(to right, #5f6bff ' + percent + '%, #3a4150 ' + percent + '%)';
   }}
 
-  // Volume slider
+  // Volume slider - control both tracks
   volSlider.addEventListener('input', e => {{
     const val = parseFloat(e.target.value);
-    ws.setVolume(val);
+    grooveWS.setVolume(val);
+    lyricsWS.setVolume(val);
     updateSliderGradient(val);
   }});
 
-  // Speed control
+  // Speed control - control both tracks
   speedSelect.addEventListener('change', e => {{
-    ws.setPlaybackRate(parseFloat(e.target.value));
+    const rate = parseFloat(e.target.value);
+    grooveWS.setPlaybackRate(rate);
+    lyricsWS.setPlaybackRate(rate);
+  }});
+
+  // Seek both tracks together
+  grooveWS.on('seek', (progress) => {{
+    const time = progress * grooveWS.getDuration();
+    lyricsWS.setTime(Math.min(time, lyricsWS.getDuration() - 0.01));
   }});
 
   // Click knob cycles A→B→C
   document.getElementById('knob').addEventListener('click', () => {{
     const next = (currentIdx + 1) % 3;
-    loadVersion(next);
+    loadLyrics(next);
   }});
 
   // Click labels directly
@@ -529,52 +592,55 @@ html = f"""
     el.addEventListener('click', (e) => {{
       e.stopPropagation();
       const idx = parseInt(el.getAttribute('data-idx'));
-      if (idx !== currentIdx) loadVersion(idx);
+      if (idx !== currentIdx) loadLyrics(idx);
     }});
   }});
 
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {{
-    // Prevent if user is typing in an input
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     
     switch(e.key) {{
-      case ' ': // Space - play/pause
+      case ' ':
         e.preventDefault();
-        ws.playPause();
+        playBtn.click();
         break;
-      case '1': // Switch to version A
+      case '1':
         e.preventDefault();
-        if (currentIdx !== 0) loadVersion(0);
+        if (currentIdx !== 0) loadLyrics(0);
         break;
-      case '2': // Switch to version B
+      case '2':
         e.preventDefault();
-        if (currentIdx !== 1) loadVersion(1);
+        if (currentIdx !== 1) loadLyrics(1);
         break;
-      case '3': // Switch to version C
+      case '3':
         e.preventDefault();
-        if (currentIdx !== 2) loadVersion(2);
+        if (currentIdx !== 2) loadLyrics(2);
         break;
-      case 'ArrowLeft': // Seek backward
+      case 'ArrowLeft':
         e.preventDefault();
-        ws.skip(-5);
+        grooveWS.skip(-5);
+        lyricsWS.skip(-5);
         break;
-      case 'ArrowRight': // Seek forward
+      case 'ArrowRight':
         e.preventDefault();
-        ws.skip(5);
+        grooveWS.skip(5);
+        lyricsWS.skip(5);
         break;
-      case 'ArrowUp': // Volume up
+      case 'ArrowUp':
         e.preventDefault();
         const newVolUp = Math.min(1, parseFloat(volSlider.value) + 0.1);
         volSlider.value = newVolUp;
-        ws.setVolume(newVolUp);
+        grooveWS.setVolume(newVolUp);
+        lyricsWS.setVolume(newVolUp);
         updateSliderGradient(newVolUp);
         break;
-      case 'ArrowDown': // Volume down
+      case 'ArrowDown':
         e.preventDefault();
         const newVolDown = Math.max(0, parseFloat(volSlider.value) - 0.1);
         volSlider.value = newVolDown;
-        ws.setVolume(newVolDown);
+        grooveWS.setVolume(newVolDown);
+        lyricsWS.setVolume(newVolDown);
         updateSliderGradient(newVolDown);
         break;
     }}
@@ -582,6 +648,10 @@ html = f"""
 
   // Click on waveform to seek
   document.getElementById('waveform').style.cursor = 'pointer';
+
+  // Initialize UI
+  setPointer(0);
+  setLabelActive(0);
 </script>
 """
 
