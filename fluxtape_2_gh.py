@@ -6,28 +6,20 @@ st.set_page_config(layout="wide", page_title="FluXTape Complete", page_icon="�
 
 st.markdown("""
 <style>
-/* make the whole app use the gradient */
 [data-testid="stAppViewContainer"] {
   background: linear-gradient(160deg, #0f1115 0%, #1a1d25 100%) fixed !important;
 }
-
-/* hide the default header bar background so gradient shows through */
 [data-testid="stHeader"] {
   background: rgba(0,0,0,0) !important;
 }
-
-/* optional: sidebar tint (remove if you don't use sidebar) */
 [data-testid="stSidebar"] {
   background: rgba(0,0,0,0.15) !important;
 }
-
-/* Hide Streamlit branding */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- Audio files (must sit next to this script) ---
 audio_files = {
     "groove": "groove.mp3",
     "lyricsA": "lyricsA.mp3",
@@ -40,7 +32,6 @@ audio_files = {
 }
 
 def file_to_data_url(path, mime="audio/mpeg"):
-    """Convert audio file to base64 data URL with error handling"""
     try:
         if not os.path.exists(path):
             st.error(f"❌ Audio file not found: {path}")
@@ -52,7 +43,6 @@ def file_to_data_url(path, mime="audio/mpeg"):
         st.error(f"❌ Error loading {path}: {str(e)}")
         return None
 
-# Load audio files with error handling
 audio_map = {}
 for k, v in audio_files.items():
     data_url = file_to_data_url(v)
@@ -60,7 +50,7 @@ for k, v in audio_files.items():
         audio_map[k] = data_url
 
 if len(audio_map) < 8:
-    st.error("❌ Not all audio files could be loaded. Please ensure all 8 stem files are in the same directory as this script.")
+    st.error("❌ Not all audio files could be loaded. Please ensure all 8 stem files are present.")
     st.stop()
 
 html = f"""
@@ -69,7 +59,7 @@ html = f"""
     FluX-Tape
   </h1>
   <h3 style="font-family:'Inter', sans-serif; font-weight:400; color:#8b92a8; font-size:16px; margin-top:0; letter-spacing:0.5px;">
-	Complete Multi-Stem System
+    Complete Multi-Stem System
   </h3>
   <div style="margin-top:15px;">
     <button id="playBtn" class="play-btn" title="Play/Pause (Space)">▶</button>
@@ -78,7 +68,6 @@ html = f"""
 
 <div id="waveform" style="margin:30px auto; width:90%; max-width:1200px;"></div>
 
-<!-- Simple Visual Equalizer -->
 <div class="visualizer-container paused">
   <div class="vis-bar" style="animation-delay: 0s;"></div>
   <div class="vis-bar" style="animation-delay: 0.1s;"></div>
@@ -94,7 +83,6 @@ html = f"""
   <div class="vis-bar" style="animation-delay: 0.28s;"></div>
 </div>
 
-<!-- Time counter and speed control -->
 <div style="display:flex; justify-content:center; align-items:center; gap:25px; margin-top:12px;">
   <div id="time-display" style="color:#8b92a8; font-family:'Inter', sans-serif; font-size:15px; font-weight:500; min-width:100px; text-align:right;">
     0:00 / 0:00
@@ -112,15 +100,12 @@ html = f"""
   </div>
 </div>
 
-<!-- Volume control -->
 <div style="text-align:center; margin:25px 0;">
   <div style="color:#8b92a8; font-size:22px; margin-bottom:8px;">🔊</div>
   <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider" title="Volume Control">
 </div>
 
-<!-- Stem Controls Grid -->
 <div class="controls-grid">
-  <!-- Lyrics Control -->
   <div class="control-section">
     <div class="control-header">LYRICS</div>
     <div class="knob-wrap-small">
@@ -128,14 +113,13 @@ html = f"""
         <div id="lyricsPointer" class="pointer-small"></div>
         <div class="center-dot-small"></div>
       </div>
-      <div class="label-small labelA-small" data-idx="0">A</div>
-      <div class="label-small labelB-small" data-idx="1">B</div>
-      <div class="label-small labelC-small" data-idx="2">C</div>
+      <div class="label-small labelA-small" data-lyrics="A">A</div>
+      <div class="label-small labelB-small" data-lyrics="B">B</div>
+      <div class="label-small labelC-small" data-lyrics="C">C</div>
     </div>
     <div id="lyricsDisplay" class="version-badge">Lyrics A</div>
   </div>
 
-  <!-- Solo Control -->
   <div class="control-section">
     <div class="control-header">SOLO</div>
     <div class="toggle-container">
@@ -145,7 +129,6 @@ html = f"""
     <div id="soloDisplay" class="version-badge">Solo A</div>
   </div>
 
-  <!-- Harmony Control -->
   <div class="control-section">
     <div class="control-header">HARMONY</div>
     <div class="toggle-container">
@@ -156,7 +139,6 @@ html = f"""
   </div>
 </div>
 
-<!-- Keyboard shortcuts info -->
 <div style="text-align:center; margin-top:30px; padding:20px; background:rgba(255,255,255,0.03); border-radius:12px; max-width:600px; margin-left:auto; margin-right:auto;">
   <div style="color:#8b92a8; font-size:13px; font-family:'Inter', sans-serif; margin-bottom:10px; font-weight:600;">
     ⌨️ KEYBOARD SHORTCUTS
@@ -180,9 +162,7 @@ html = f"""
     --text-muted: #8b92a8;
   }}
   
-  * {{
-    font-family: 'Inter', sans-serif;
-  }}
+  * {{ font-family: 'Inter', sans-serif; }}
 
   html, body, .stApp {{
     height: 100%;
@@ -207,9 +187,7 @@ html = f"""
     background: var(--accent-hover);
     box-shadow: 0 12px 32px rgba(76,175,80,.6);
   }}
-  .play-btn:active {{
-    transform: scale(0.98);
-  }}
+  .play-btn:active {{ transform: scale(0.98); }}
   .play-btn.pause {{
     background: #FBC02D;
     box-shadow: 0 8px 24px rgba(251,192,45,.5);
@@ -235,7 +213,6 @@ html = f"""
     border-color: #4a5160;
   }}
 
-  /* Controls Grid */
   .controls-grid {{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -272,7 +249,6 @@ html = f"""
     font-weight: 600;
   }}
 
-  /* Small Knob for Lyrics */
   .knob-wrap-small {{
     position: relative;
     width: 140px;
@@ -294,12 +270,8 @@ html = f"""
     cursor: pointer;
     transition: transform 0.2s ease;
   }}
-  .knob-small:hover {{
-    transform: scale(1.05);
-  }}
-  .knob-small:active {{
-    transform: scale(0.98);
-  }}
+  .knob-small:hover {{ transform: scale(1.05); }}
+  .knob-small:active {{ transform: scale(0.98); }}
 
   .center-dot-small {{
     width: 8px;
@@ -354,7 +326,6 @@ html = f"""
   .labelB-small {{ top: -15px; left: 50%; transform: translateX(-50%); }}
   .labelC-small {{ top: 50%; right: -20px; transform: translateY(-50%); }}
 
-  /* Toggle Buttons */
   .toggle-container {{
     display: flex;
     gap: 10px;
@@ -385,7 +356,6 @@ html = f"""
     box-shadow: 0 4px 12px rgba(76,175,80,0.4);
   }}
 
-  /* Volume slider styling */
   .slider {{
     -webkit-appearance: none;
     width: 300px;
@@ -396,9 +366,7 @@ html = f"""
     cursor: pointer;
     transition: all 0.2s ease;
   }}
-  .slider:hover {{
-    height: 9px;
-  }}
+  .slider:hover {{ height: 9px; }}
   .slider::-webkit-slider-thumb {{
     -webkit-appearance: none;
     appearance: none;
@@ -410,12 +378,8 @@ html = f"""
     transition: transform 0.2s ease;
     cursor: grab;
   }}
-  .slider::-webkit-slider-thumb:hover {{
-    transform: scale(1.3);
-  }}
-  .slider::-webkit-slider-thumb:active {{
-    cursor: grabbing;
-  }}
+  .slider::-webkit-slider-thumb:hover {{ transform: scale(1.3); }}
+  .slider::-webkit-slider-thumb:active {{ cursor: grabbing; }}
   .slider::-moz-range-thumb {{
     width: 20px;
     height: 20px;
@@ -426,7 +390,6 @@ html = f"""
     border: none;
   }}
 
-  /* Visual Equalizer */
   .visualizer-container {{
     display: flex;
     justify-content: center;
@@ -449,18 +412,9 @@ html = f"""
   }}
   
   @keyframes pulse {{
-    0% {{
-      height: 15%;
-      opacity: 0.6;
-    }}
-    50% {{
-      height: 75%;
-      opacity: 1;
-    }}
-    100% {{
-      height: 30%;
-      opacity: 0.7;
-    }}
+    0% {{ height: 15%; opacity: 0.6; }}
+    50% {{ height: 75%; opacity: 1; }}
+    100% {{ height: 30%; opacity: 0.7; }}
   }}
   
   .visualizer-container.paused .vis-bar {{
@@ -474,10 +428,9 @@ html = f"""
 
 <script>
   const audioMap = {audio_map};
-  const lyricsOptions = ["A","B","C"];
-  const lyricsAngles = [270, 0, 90];
+  const lyricsAngles = {{A: 270, B: 0, C: 90}};
 
-  // Create WaveSurfer instances for all stems
+  // Create visible groove waveform
   const grooveWS = WaveSurfer.create({{
     container: '#waveform',
     waveColor: '#4a5568',
@@ -493,37 +446,36 @@ html = f"""
     normalize: true,
   }});
 
-  // Create hidden containers for other stems
+  // Create hidden WaveSurfer instances for all other stems
   function createHiddenWS() {{
-    const container = document.createElement('div');
-    container.style.display = 'none';
-    document.body.appendChild(container);
-    return WaveSurfer.create({{
-      container: container,
-      backend: 'WebAudio',
-    }});
+    const div = document.createElement('div');
+    div.style.display = 'none';
+    document.body.appendChild(div);
+    return WaveSurfer.create({{ container: div, backend: 'WebAudio' }});
   }}
 
-  const lyricsWS = createHiddenWS();
-  const soloWS = createHiddenWS();
-  const harmonyWS = createHiddenWS();
+  const stems = {{
+    lyricsA: createHiddenWS(),
+    lyricsB: createHiddenWS(),
+    lyricsC: createHiddenWS(),
+    soloA: createHiddenWS(),
+    soloB: createHiddenWS(),
+    harmony_narrow: createHiddenWS(),
+    harmony_wide: createHiddenWS()
+  }};
 
-  // State tracking
-  let currentLyrics = 0;
+  // State
+  let currentLyrics = 'A';
   let currentSolo = 'A';
   let currentHarmony = 'narrow';
   let isPlaying = false;
-  let readyStems = {{
-    groove: false,
-    lyrics: false,
-    solo: false,
-    harmony: false
-  }};
+  let allReady = false;
+  let readyCount = 0;
 
   // UI Elements
   const playBtn = document.getElementById('playBtn');
   const lyricsPointer = document.getElementById('lyricsPointer');
-  const lyricsLabelEls = Array.from(document.querySelectorAll('.label-small'));
+  const lyricsLabels = Array.from(document.querySelectorAll('[data-lyrics]'));
   const timeDisplay = document.getElementById('time-display');
   const volSlider = document.getElementById('volumeSlider');
   const speedSelect = document.getElementById('speedSelect');
@@ -532,6 +484,7 @@ html = f"""
   const soloDisplay = document.getElementById('soloDisplay');
   const harmonyDisplay = document.getElementById('harmonyDisplay');
 
+  // Helper Functions
   function formatTime(sec) {{
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60).toString().padStart(2, '0');
@@ -544,87 +497,76 @@ html = f"""
     timeDisplay.textContent = formatTime(cur) + ' / ' + formatTime(total);
   }}
 
-  function playAll() {{
-    if (Object.values(readyStems).every(v => v)) {{
-      isPlaying = true;
-      grooveWS.play();
-      lyricsWS.play();
-      soloWS.play();
-      harmonyWS.play();
+  function checkReady() {{
+    readyCount++;
+    console.log('Stem ready:', readyCount + '/8');
+    if (readyCount === 8) {{
+      allReady = true;
+      console.log('✅ All stems loaded!');
+      updateActiveStemVolumes();
     }}
+  }}
+
+  function updateActiveStemVolumes() {{
+    const vol = parseFloat(volSlider.value);
+    const rate = parseFloat(speedSelect.value);
+    
+    // Groove always plays
+    grooveWS.setVolume(vol);
+    grooveWS.setPlaybackRate(rate);
+    
+    // Update all stems
+    Object.keys(stems).forEach(key => {{
+      const ws = stems[key];
+      ws.setPlaybackRate(rate);
+      
+      // Only unmute active stems
+      if (key === 'lyrics' + currentLyrics || 
+          key === 'solo' + currentSolo || 
+          key === 'harmony_' + currentHarmony) {{
+        ws.setVolume(vol);
+      }} else {{
+        ws.setVolume(0); // Mute inactive
+      }}
+    }});
+  }}
+
+  function playAll() {{
+    if (!allReady) {{
+      console.warn('Not all stems ready yet');
+      return;
+    }}
+    isPlaying = true;
+    grooveWS.play();
+    Object.values(stems).forEach(ws => ws.play());
   }}
 
   function pauseAll() {{
     isPlaying = false;
     grooveWS.pause();
-    lyricsWS.pause();
-    soloWS.pause();
-    harmonyWS.pause();
+    Object.values(stems).forEach(ws => ws.pause());
   }}
 
-  function syncTime(time) {{
-    lyricsWS.setTime(Math.min(time, lyricsWS.getDuration() - 0.01));
-    soloWS.setTime(Math.min(time, soloWS.getDuration() - 0.01));
-    harmonyWS.setTime(Math.min(time, harmonyWS.getDuration() - 0.01));
-  }}
-
-  function applyGlobalSettings(ws) {{
-    ws.setVolume(parseFloat(volSlider.value));
-    ws.setPlaybackRate(parseFloat(speedSelect.value));
-  }}
-
-  function loadStem(ws, key, readyKey, callback) {{
-    const currentTime = grooveWS.getCurrentTime();
-    const wasPlaying = isPlaying;
-    
-    if (wasPlaying) pauseAll();
-    
-    readyStems[readyKey] = false;
-    ws.load(audioMap[key]);
-    
-    ws.once('ready', () => {{
-      readyStems[readyKey] = true;
-      ws.setTime(Math.min(currentTime, ws.getDuration() - 0.01));
-      applyGlobalSettings(ws);
-      
-      if (callback) callback();
-      
-      if (wasPlaying) {{
-        setTimeout(() => playAll(), 50);
-      }}
-    }});
-  }}
-
-  // Load initial stems
+  // Load all 8 stems at startup
+  console.log('Loading groove...');
   grooveWS.load(audioMap.groove);
-  lyricsWS.load(audioMap.lyricsA);
-  soloWS.load(audioMap.soloA);
-  harmonyWS.load(audioMap.harmony_narrow);
-
   grooveWS.on('ready', () => {{
-    readyStems.groove = true;
+    console.log('✓ Groove ready');
     updateTime();
-    applyGlobalSettings(grooveWS);
-    updateSliderGradient(volSlider.value);
+    checkReady();
   }});
 
-  lyricsWS.on('ready', () => {{
-    readyStems.lyrics = true;
-    applyGlobalSettings(lyricsWS);
+  Object.keys(stems).forEach(key => {{
+    console.log('Loading ' + key + '...');
+    stems[key].load(audioMap[key]);
+    stems[key].on('ready', () => {{
+      console.log('✓ ' + key + ' ready');
+      checkReady();
+    }});
   }});
 
-  soloWS.on('ready', () => {{
-    readyStems.solo = true;
-    applyGlobalSettings(soloWS);
-  }});
-
-  harmonyWS.on('ready', () => {{
-    readyStems.harmony = true;
-    applyGlobalSettings(harmonyWS);
-  }});
-
+  // Event Handlers
   grooveWS.on('audioprocess', updateTime);
-  
   grooveWS.on('finish', () => {{
     pauseAll();
     playBtn.textContent = '▶';
@@ -632,12 +574,8 @@ html = f"""
     visualizer.classList.add('paused');
   }});
 
-  console.log('Play button:', playBtn);
-  console.log('Lyrics labels:', lyricsLabelEls);
-
-  // Play/Pause
+  // Play/Pause Button
   playBtn.addEventListener('click', () => {{
-    console.log('Play button clicked, isPlaying:', isPlaying);
     if (isPlaying) {{
       pauseAll();
       playBtn.textContent = '▶';
@@ -651,63 +589,72 @@ html = f"""
     }}
   }});
 
-  // Lyrics Control
-  function setLyricsActive(idx) {{
-    lyricsLabelEls.forEach((el,i)=> el.classList.toggle('active', i===idx));
-    lyricsPointer.style.transform = 'translate(-50%, 0) rotate(' + lyricsAngles[idx] + 'deg)';
-    lyricsDisplay.textContent = 'Lyrics ' + lyricsOptions[idx];
+  // Lyrics Controls
+  function setLyricsActive(version) {{
+    lyricsLabels.forEach(el => {{
+      el.classList.toggle('active', el.getAttribute('data-lyrics') === version);
+    }});
+    lyricsPointer.style.transform = 'translate(-50%, 0) rotate(' + lyricsAngles[version] + 'deg)';
+    lyricsDisplay.textContent = 'Lyrics ' + version;
   }}
 
-  function switchLyrics(idx) {{
-    const key = 'lyrics' + lyricsOptions[idx];
-    loadStem(lyricsWS, key, 'lyrics', () => {{
-      currentLyrics = idx;
-      setLyricsActive(idx);
-    }});
+  function switchLyrics(version) {{
+    if (version === currentLyrics) return;
+    
+    // Mute old, unmute new
+    stems['lyrics' + currentLyrics].setVolume(0);
+    stems['lyrics' + version].setVolume(parseFloat(volSlider.value));
+    
+    currentLyrics = version;
+    setLyricsActive(version);
   }}
 
   document.getElementById('lyricsKnob').addEventListener('click', () => {{
-    const next = (currentLyrics + 1) % 3;
+    const next = {{A: 'B', B: 'C', C: 'A'}}[currentLyrics];
     switchLyrics(next);
   }});
 
-  lyricsLabelEls.forEach(el => {{
+  lyricsLabels.forEach(el => {{
     el.addEventListener('click', (e) => {{
       e.stopPropagation();
-      const idx = parseInt(el.getAttribute('data-idx'));
-      if (idx !== currentLyrics) switchLyrics(idx);
+      const version = el.getAttribute('data-lyrics');
+      switchLyrics(version);
     }});
   }});
 
-  // Solo Control
+  // Solo Controls
   document.querySelectorAll('[data-solo]').forEach(btn => {{
     btn.addEventListener('click', () => {{
       const version = btn.getAttribute('data-solo');
       if (version === currentSolo) return;
       
+      // Mute old, unmute new
+      stems['solo' + currentSolo].setVolume(0);
+      stems['solo' + version].setVolume(parseFloat(volSlider.value));
+      
       document.querySelectorAll('[data-solo]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       
-      loadStem(soloWS, 'solo' + version, 'solo', () => {{
-        currentSolo = version;
-        soloDisplay.textContent = 'Solo ' + version;
-      }});
+      currentSolo = version;
+      soloDisplay.textContent = 'Solo ' + version;
     }});
   }});
 
-  // Harmony Control
+  // Harmony Controls
   document.querySelectorAll('[data-harmony]').forEach(btn => {{
     btn.addEventListener('click', () => {{
       const version = btn.getAttribute('data-harmony');
       if (version === currentHarmony) return;
       
+      // Mute old, unmute new
+      stems['harmony_' + currentHarmony].setVolume(0);
+      stems['harmony_' + version].setVolume(parseFloat(volSlider.value));
+      
       document.querySelectorAll('[data-harmony]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       
-      loadStem(harmonyWS, 'harmony_' + version, 'harmony', () => {{
-        currentHarmony = version;
-        harmonyDisplay.textContent = version.charAt(0).toUpperCase() + version.slice(1);
-      }});
+      currentHarmony = version;
+      harmonyDisplay.textContent = version.charAt(0).toUpperCase() + version.slice(1);
     }});
   }});
 
@@ -719,26 +666,24 @@ html = f"""
 
   volSlider.addEventListener('input', e => {{
     const val = parseFloat(e.target.value);
-    grooveWS.setVolume(val);
-    lyricsWS.setVolume(val);
-    soloWS.setVolume(val);
-    harmonyWS.setVolume(val);
     updateSliderGradient(val);
+    updateActiveStemVolumes();
   }});
 
   // Speed Control
   speedSelect.addEventListener('change', e => {{
     const rate = parseFloat(e.target.value);
     grooveWS.setPlaybackRate(rate);
-    lyricsWS.setPlaybackRate(rate);
-    soloWS.setPlaybackRate(rate);
-    harmonyWS.setPlaybackRate(rate);
+    Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
   }});
 
-  // Seek Sync
+  // Seek Sync - when groove seeks, all stems follow
   grooveWS.on('seek', (progress) => {{
     const time = progress * grooveWS.getDuration();
-    syncTime(time);
+    Object.values(stems).forEach(ws => {{
+      const targetTime = Math.min(time, ws.getDuration() - 0.01);
+      ws.setTime(targetTime);
+    }});
   }});
 
   // Keyboard Shortcuts
@@ -752,58 +697,47 @@ html = f"""
         break;
       case '1':
         e.preventDefault();
-        if (currentLyrics !== 0) switchLyrics(0);
+        switchLyrics('A');
         break;
       case '2':
         e.preventDefault();
-        if (currentLyrics !== 1) switchLyrics(1);
+        switchLyrics('B');
         break;
       case '3':
         e.preventDefault();
-        if (currentLyrics !== 2) switchLyrics(2);
+        switchLyrics('C');
         break;
       case 'ArrowLeft':
         e.preventDefault();
         grooveWS.skip(-5);
-        lyricsWS.skip(-5);
-        soloWS.skip(-5);
-        harmonyWS.skip(-5);
+        Object.values(stems).forEach(ws => ws.skip(-5));
         break;
       case 'ArrowRight':
         e.preventDefault();
         grooveWS.skip(5);
-        lyricsWS.skip(5);
-        soloWS.skip(5);
-        harmonyWS.skip(5);
+        Object.values(stems).forEach(ws => ws.skip(5));
         break;
       case 'ArrowUp':
         e.preventDefault();
         const newVolUp = Math.min(1, parseFloat(volSlider.value) + 0.1);
         volSlider.value = newVolUp;
-        grooveWS.setVolume(newVolUp);
-        lyricsWS.setVolume(newVolUp);
-        soloWS.setVolume(newVolUp);
-        harmonyWS.setVolume(newVolUp);
         updateSliderGradient(newVolUp);
+        updateActiveStemVolumes();
         break;
       case 'ArrowDown':
         e.preventDefault();
         const newVolDown = Math.max(0, parseFloat(volSlider.value) - 0.1);
         volSlider.value = newVolDown;
-        grooveWS.setVolume(newVolDown);
-        lyricsWS.setVolume(newVolDown);
-        soloWS.setVolume(newVolDown);
-        harmonyWS.setVolume(newVolDown);
         updateSliderGradient(newVolDown);
+        updateActiveStemVolumes();
         break;
     }}
   }});
 
-  // Click on waveform to seek
+  // Initialize
   document.getElementById('waveform').style.cursor = 'pointer';
-
-  // Initialize UI
-  setLyricsActive(0);
+  setLyricsActive('A');
+  updateSliderGradient(1);
 </script>
 """
 
