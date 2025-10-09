@@ -2,7 +2,7 @@ import streamlit as st
 import base64
 import os
 
-st.set_page_config(layout="wide", page_title="FluXTape REF3", page_icon="🎵")
+st.set_page_config(layout="wide", page_title="FluXTape Complete", page_icon="🎵")
 
 st.markdown("""
 <style>
@@ -33,6 +33,10 @@ audio_files = {
     "lyricsA": "lyricsA.mp3",
     "lyricsB": "lyricsB.mp3",
     "lyricsC": "lyricsC.mp3",
+    "soloA": "soloA.mp3",
+    "soloB": "soloB.mp3",
+    "harmony_narrow": "harmony_narrow.mp3",
+    "harmony_wide": "harmony_wide.mp3",
 }
 
 def file_to_data_url(path, mime="audio/mpeg"):
@@ -55,17 +59,17 @@ for k, v in audio_files.items():
     if data_url:
         audio_map[k] = data_url
 
-if len(audio_map) < 4:
-    st.error("❌ Not all audio files could be loaded. Please ensure groove.mp3, lyricsA.mp3, lyricsB.mp3, and lyricsC.mp3 are in the same directory as this script.")
+if len(audio_map) < 8:
+    st.error("❌ Not all audio files could be loaded. Please ensure all 8 stem files are in the same directory as this script.")
     st.stop()
 
 html = f"""
 <div style="text-align:center; margin-bottom:10px;">
   <h1 style="font-family:'Inter', sans-serif; font-weight:800; color:#ffffff; font-size:48px; margin-bottom:5px; letter-spacing:-1px;">
-    FluX-Tape REF3
+    FluX-Tape
   </h1>
   <h3 style="font-family:'Inter', sans-serif; font-weight:400; color:#8b92a8; font-size:16px; margin-top:0; letter-spacing:0.5px;">
-	Multi-Stem Playback System
+	Complete Multi-Stem System
   </h3>
   <div style="margin-top:15px;">
     <button id="playBtn" class="play-btn" title="Play/Pause (Space)">▶</button>
@@ -114,23 +118,42 @@ html = f"""
   <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="1" class="slider" title="Volume Control">
 </div>
 
-<!-- Current Version Display -->
-<div id="versionDisplay" style="text-align:center; margin:15px 0;">
-  <div style="display:inline-block; background:rgba(183,28,28,0.2); border:2px solid #b71c1c; border-radius:20px; padding:8px 20px;">
-    <span style="color:#8b92a8; font-size:13px; font-family:'Inter', sans-serif; margin-right:8px;">NOW PLAYING:</span>
-    <span id="currentVersion" style="color:#fff; font-size:15px; font-weight:700; font-family:'Inter', sans-serif;">Lyrics A</span>
+<!-- Stem Controls Grid -->
+<div class="controls-grid">
+  <!-- Lyrics Control -->
+  <div class="control-section">
+    <div class="control-header">LYRICS</div>
+    <div class="knob-wrap-small">
+      <div id="lyricsKnob" class="knob-small" title="Click to cycle lyrics">
+        <div id="lyricsPointer" class="pointer-small"></div>
+        <div class="center-dot-small"></div>
+      </div>
+      <div class="label-small labelA-small" data-idx="0">A</div>
+      <div class="label-small labelB-small" data-idx="1">B</div>
+      <div class="label-small labelC-small" data-idx="2">C</div>
+    </div>
+    <div id="lyricsDisplay" class="version-badge">Lyrics A</div>
   </div>
-</div>
 
-<!-- Knob + orbiting labels -->
-<div class="knob-wrap">
-  <div id="knob" class="knob" title="Click to cycle versions">
-    <div id="pointer" class="pointer"></div>
-    <div class="center-dot"></div>
+  <!-- Solo Control -->
+  <div class="control-section">
+    <div class="control-header">SOLO</div>
+    <div class="toggle-container">
+      <button class="toggle-btn active" data-solo="A">Take A</button>
+      <button class="toggle-btn" data-solo="B">Take B</button>
+    </div>
+    <div id="soloDisplay" class="version-badge">Solo A</div>
   </div>
-  <div class="label labelA" data-idx="0" title="Switch to Lyrics A (Key: 1)">Lyrics A</div>
-  <div class="label labelB" data-idx="1" title="Switch to Lyrics B (Key: 2)">Lyrics B</div>
-  <div class="label labelC" data-idx="2" title="Switch to Lyrics C (Key: 3)">Lyrics C</div>
+
+  <!-- Harmony Control -->
+  <div class="control-section">
+    <div class="control-header">HARMONY</div>
+    <div class="toggle-container">
+      <button class="toggle-btn active" data-harmony="narrow">Narrow</button>
+      <button class="toggle-btn" data-harmony="wide">Wide</button>
+    </div>
+    <div id="harmonyDisplay" class="version-badge">Narrow</div>
+  </div>
 </div>
 
 <!-- Keyboard shortcuts info -->
@@ -141,7 +164,7 @@ html = f"""
   <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; color:#6b7280; font-size:12px; font-family:'Inter', sans-serif;">
     <div><kbd style="background:#2a2f3a; padding:2px 8px; border-radius:4px; color:#fff;">Space</kbd> Play/Pause</div>
     <div><kbd style="background:#2a2f3a; padding:2px 8px; border-radius:4px; color:#fff;">←→</kbd> Seek ±5s</div>
-    <div><kbd style="background:#2a2f3a; padding:2px 8px; border-radius:4px; color:#fff;">1/2/3</kbd> Switch Version</div>
+    <div><kbd style="background:#2a2f3a; padding:2px 8px; border-radius:4px; color:#fff;">1/2/3</kbd> Lyrics A/B/C</div>
     <div><kbd style="background:#2a2f3a; padding:2px 8px; border-radius:4px; color:#fff;">↑↓</kbd> Volume ±10%</div>
   </div>
 </div>
@@ -212,87 +235,154 @@ html = f"""
     border-color: #4a5160;
   }}
 
-  .knob-wrap {{
+  /* Controls Grid */
+  .controls-grid {{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }}
+
+  .control-section {{
+    background: rgba(255,255,255,0.03);
+    border-radius: 16px;
+    padding: 25px 20px;
+    text-align: center;
+  }}
+
+  .control-header {{
+    color: #8b92a8;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+  }}
+
+  .version-badge {{
+    margin-top: 15px;
+    display: inline-block;
+    background: rgba(95,107,255,0.2);
+    border: 1px solid #5f6bff;
+    border-radius: 12px;
+    padding: 6px 14px;
+    color: #8b9dff;
+    font-size: 13px;
+    font-weight: 600;
+  }}
+
+  /* Small Knob for Lyrics */
+  .knob-wrap-small {{
     position: relative;
-    width: 280px;
-    height: 280px;
-    margin: 45px auto;
+    width: 140px;
+    height: 140px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
   }}
 
-  .knob {{
-    width: 180px;
-    height: 180px;
+  .knob-small {{
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #2b313c, #1b1f27 70%);
     position: relative;
-    box-shadow: inset 0 6px 16px rgba(0,0,0,.6), 0 10px 28px rgba(0,0,0,.4);
+    box-shadow: inset 0 4px 10px rgba(0,0,0,.6), 0 6px 18px rgba(0,0,0,.4);
     border: 2px solid #2e3440;
     cursor: pointer;
     transition: transform 0.2s ease;
   }}
-  .knob:hover {{
-    transform: scale(1.03);
+  .knob-small:hover {{
+    transform: scale(1.05);
   }}
-  .knob:active {{
+  .knob-small:active {{
     transform: scale(0.98);
   }}
-  
-  .center-dot {{
-    width: 14px;
-    height: 14px;
+
+  .center-dot-small {{
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: #cfd8dc;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%,-50%);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
   }}
-  
-  .pointer {{
+
+  .pointer-small {{
     position: absolute;
-    width: 5px;
-    height: 60px;
+    width: 3px;
+    height: 30px;
     background: linear-gradient(to top, #ffffff, #e0e0e0);
-    border-radius: 3px;
+    border-radius: 2px;
     transform-origin: bottom center;
     bottom: 50%;
     left: 50%;
     translate: -50% 0;
-    box-shadow: 0 0 12px rgba(255,255,255,.5);
+    box-shadow: 0 0 8px rgba(255,255,255,.5);
     transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
   }}
 
-  .label {{
+  .label-small {{
     position: absolute;
     background: #2a2f3a;
     color: var(--text);
-    padding: 10px 18px;
-    border-radius: 16px;
-    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    border: 2px solid transparent;
+    border: 1px solid transparent;
     user-select: none;
   }}
-  .label:hover {{ 
-    background: #3a4150; 
+  .label-small:hover {{
+    background: #3a4150;
     border-color: #4a5160;
   }}
-  
-  .labelA:hover {{ transform: translateY(-50%) scale(1.05); }}
-  .labelB:hover {{ transform: translateX(-50%) scale(1.05); }}
-  .labelC:hover {{ transform: translateY(-50%) scale(1.05); }}
-  
-  .label.active {{
+  .label-small.active {{
     background: #b71c1c;
-    box-shadow: 0 0 20px rgba(183,28,28,1), 0 4px 12px rgba(183,28,28,0.6);
+    box-shadow: 0 0 12px rgba(183,28,28,0.9);
     border-color: #d32f2f;
-    transform: scale(1.1);
+  }}
+
+  .labelA-small {{ top: 50%; left: -20px; transform: translateY(-50%); }}
+  .labelB-small {{ top: -15px; left: 50%; transform: translateX(-50%); }}
+  .labelC-small {{ top: 50%; right: -20px; transform: translateY(-50%); }}
+
+  /* Toggle Buttons */
+  .toggle-container {{
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }}
+
+  .toggle-btn {{
+    flex: 1;
+    max-width: 120px;
+    background: #2a2f3a;
+    color: #8b92a8;
+    border: 2px solid #3a4150;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }}
+  .toggle-btn:hover {{
+    background: #3a4150;
+    border-color: #4a5160;
+  }}
+  .toggle-btn.active {{
+    background: #4CAF50;
+    color: #fff;
+    border-color: #66BB6A;
+    box-shadow: 0 4px 12px rgba(76,175,80,0.4);
   }}
 
   /* Volume slider styling */
@@ -335,20 +425,6 @@ html = f"""
     cursor: pointer;
     border: none;
   }}
-
-  /* Positions: A=9pm, B=12, C=3pm */
-  .labelA {{ top: 50%; left: -50px; }}
-  .labelB {{ top: -1px; left: 50%; }}
-  .labelC {{ top: 50%; right: -50px; }}
-  
-  /* Fixed transforms to prevent movement */
-  .labelA {{ transform: translateY(-50%); }}
-  .labelB {{ transform: translateX(-50%); }}
-  .labelC {{ transform: translateY(-50%); }}
-  
-  .labelA.active {{ transform: translateY(-50%) scale(1.1); }}
-  .labelB.active {{ transform: translateX(-50%) scale(1.1); }}
-  .labelC.active {{ transform: translateY(-50%) scale(1.1); }}
 
   /* Visual Equalizer */
   .visualizer-container {{
@@ -398,10 +474,10 @@ html = f"""
 
 <script>
   const audioMap = {audio_map};
-  const labels = ["A","B","C"];
-  const angles = [270, 0, 90];
+  const lyricsLabels = ["A","B","C"];
+  const lyricsAngles = [270, 0, 90];
 
-  // Create two WaveSurfer instances
+  // Create WaveSurfer instances for all stems
   const grooveWS = WaveSurfer.create({{
     container: '#waveform',
     waveColor: '#4a5568',
@@ -417,29 +493,44 @@ html = f"""
     normalize: true,
   }});
 
-  // Create a second instance for lyrics (hidden waveform)
-  const lyricsContainer = document.createElement('div');
-  lyricsContainer.style.display = 'none';
-  document.body.appendChild(lyricsContainer);
-  
-  const lyricsWS = WaveSurfer.create({{
-    container: lyricsContainer,
-    backend: 'WebAudio',
-  }});
+  // Create hidden containers for other stems
+  function createHiddenWS() {{
+    const container = document.createElement('div');
+    container.style.display = 'none';
+    document.body.appendChild(container);
+    return WaveSurfer.create({{
+      container: container,
+      backend: 'WebAudio',
+    }});
+  }}
 
-  let currentIdx = 0;
+  const lyricsWS = createHiddenWS();
+  const soloWS = createHiddenWS();
+  const harmonyWS = createHiddenWS();
+
+  // State tracking
+  let currentLyrics = 0;
+  let currentSolo = 'A';
+  let currentHarmony = 'narrow';
   let isPlaying = false;
-  let isReady = false;
-  let lyricsReady = false;
+  let readyStems = {{
+    groove: false,
+    lyrics: false,
+    solo: false,
+    harmony: false
+  }};
 
+  // UI Elements
   const playBtn = document.getElementById('playBtn');
-  const pointer = document.getElementById('pointer');
-  const labelEls = Array.from(document.querySelectorAll('.label'));
+  const lyricsPointer = document.getElementById('lyricsPointer');
+  const lyricsLabels = Array.from(document.querySelectorAll('.label-small'));
   const timeDisplay = document.getElementById('time-display');
   const volSlider = document.getElementById('volumeSlider');
   const speedSelect = document.getElementById('speedSelect');
-  const versionDisplay = document.getElementById('currentVersion');
   const visualizer = document.querySelector('.visualizer-container');
+  const lyricsDisplay = document.getElementById('lyricsDisplay');
+  const soloDisplay = document.getElementById('soloDisplay');
+  const harmonyDisplay = document.getElementById('harmonyDisplay');
 
   function formatTime(sec) {{
     const m = Math.floor(sec / 60);
@@ -453,96 +544,98 @@ html = f"""
     timeDisplay.textContent = formatTime(cur) + ' / ' + formatTime(total);
   }}
 
-  function setLabelActive(idx) {{
-    labelEls.forEach((el,i)=> el.classList.toggle('active', i===idx));
-    versionDisplay.textContent = 'Lyrics ' + labels[idx];
-  }}
-
-  function setPointer(idx) {{
-    pointer.style.transform = 'translate(-50%, 0) rotate(' + angles[idx] + 'deg)';
-  }}
-
-  function syncPlayback() {{
-    if (isReady && lyricsReady && isPlaying) {{
+  function playAll() {{
+    if (Object.values(readyStems).every(v => v)) {{
+      isPlaying = true;
       grooveWS.play();
       lyricsWS.play();
+      soloWS.play();
+      harmonyWS.play();
     }}
   }}
 
   function pauseAll() {{
+    isPlaying = false;
     grooveWS.pause();
     lyricsWS.pause();
+    soloWS.pause();
+    harmonyWS.pause();
   }}
 
-  function playAll() {{
-    if (isReady && lyricsReady) {{
-      isPlaying = true;
-      grooveWS.play();
-      lyricsWS.play();
-    }}
+  function syncTime(time) {{
+    lyricsWS.setTime(Math.min(time, lyricsWS.getDuration() - 0.01));
+    soloWS.setTime(Math.min(time, soloWS.getDuration() - 0.01));
+    harmonyWS.setTime(Math.min(time, harmonyWS.getDuration() - 0.01));
   }}
 
-  function loadLyrics(idx) {{
-    const key = 'lyrics' + labels[idx];
+  function applyGlobalSettings(ws) {{
+    ws.setVolume(parseFloat(volSlider.value));
+    ws.setPlaybackRate(parseFloat(speedSelect.value));
+  }}
+
+  function loadStem(ws, key, readyKey, callback) {{
     const currentTime = grooveWS.getCurrentTime();
     const wasPlaying = isPlaying;
     
-    if (wasPlaying) {{
-      pauseAll();
-    }}
+    if (wasPlaying) pauseAll();
     
-    lyricsReady = false;
-    lyricsWS.load(audioMap[key]);
+    readyStems[readyKey] = false;
+    ws.load(audioMap[key]);
     
-    lyricsWS.once('ready', () => {{
-      lyricsReady = true;
-      lyricsWS.setTime(Math.min(currentTime, lyricsWS.getDuration() - 0.01));
-      lyricsWS.setVolume(parseFloat(volSlider.value));
-      lyricsWS.setPlaybackRate(parseFloat(speedSelect.value));
+    ws.once('ready', () => {{
+      readyStems[readyKey] = true;
+      ws.setTime(Math.min(currentTime, ws.getDuration() - 0.01));
+      applyGlobalSettings(ws);
+      
+      if (callback) callback();
       
       if (wasPlaying) {{
-        setTimeout(() => {{
-          playAll();
-        }}, 50);
+        setTimeout(() => playAll(), 50);
       }}
     }});
-    
-    currentIdx = idx;
-    setPointer(idx);
-    setLabelActive(idx);
   }}
 
-  // Load initial files
+  // Load initial stems
   grooveWS.load(audioMap.groove);
   lyricsWS.load(audioMap.lyricsA);
+  soloWS.load(audioMap.soloA);
+  harmonyWS.load(audioMap.harmony_narrow);
 
   grooveWS.on('ready', () => {{
-    isReady = true;
+    readyStems.groove = true;
     updateTime();
-    grooveWS.setVolume(parseFloat(volSlider.value));
+    applyGlobalSettings(grooveWS);
     updateSliderGradient(volSlider.value);
   }});
 
   lyricsWS.on('ready', () => {{
-    lyricsReady = true;
-    lyricsWS.setVolume(parseFloat(volSlider.value));
+    readyStems.lyrics = true;
+    applyGlobalSettings(lyricsWS);
   }});
 
-  // Sync time display with groove track
+  soloWS.on('ready', () => {{
+    readyStems.solo = true;
+    applyGlobalSettings(soloWS);
+  }});
+
+  harmonyWS.on('ready', () => {{
+    readyStems.harmony = true;
+    applyGlobalSettings(harmonyWS);
+  }});
+
   grooveWS.on('audioprocess', updateTime);
   
   grooveWS.on('finish', () => {{
-    isPlaying = false;
+    pauseAll();
     playBtn.textContent = '▶';
     playBtn.classList.remove('pause');
     visualizer.classList.add('paused');
   }});
 
-  // Play/pause both tracks
+  // Play/Pause
   playBtn.addEventListener('click', () => {{
     if (isPlaying) {{
       pauseAll();
-      isPlaying = false;
       playBtn.textContent = '▶';
       playBtn.classList.remove('pause');
       visualizer.classList.add('paused');
@@ -554,49 +647,97 @@ html = f"""
     }}
   }});
 
-  // Update slider gradient
+  // Lyrics Control
+  function setLyricsActive(idx) {{
+    lyricsLabels.forEach((el,i)=> el.classList.toggle('active', i===idx));
+    lyricsPointer.style.transform = 'translate(-50%, 0) rotate(' + lyricsAngles[idx] + 'deg)';
+    lyricsDisplay.textContent = 'Lyrics ' + ['A','B','C'][idx];
+  }}
+
+  function switchLyrics(idx) {{
+    const key = 'lyrics' + ['A','B','C'][idx];
+    loadStem(lyricsWS, key, 'lyrics', () => {{
+      currentLyrics = idx;
+      setLyricsActive(idx);
+    }});
+  }}
+
+  document.getElementById('lyricsKnob').addEventListener('click', () => {{
+    const next = (currentLyrics + 1) % 3;
+    switchLyrics(next);
+  }});
+
+  lyricsLabels.forEach(el => {{
+    el.addEventListener('click', (e) => {{
+      e.stopPropagation();
+      const idx = parseInt(el.getAttribute('data-idx'));
+      if (idx !== currentLyrics) switchLyrics(idx);
+    }});
+  }});
+
+  // Solo Control
+  document.querySelectorAll('[data-solo]').forEach(btn => {{
+    btn.addEventListener('click', () => {{
+      const version = btn.getAttribute('data-solo');
+      if (version === currentSolo) return;
+      
+      document.querySelectorAll('[data-solo]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      loadStem(soloWS, 'solo' + version, 'solo', () => {{
+        currentSolo = version;
+        soloDisplay.textContent = 'Solo ' + version;
+      }});
+    }});
+  }});
+
+  // Harmony Control
+  document.querySelectorAll('[data-harmony]').forEach(btn => {{
+    btn.addEventListener('click', () => {{
+      const version = btn.getAttribute('data-harmony');
+      if (version === currentHarmony) return;
+      
+      document.querySelectorAll('[data-harmony]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      loadStem(harmonyWS, 'harmony_' + version, 'harmony', () => {{
+        currentHarmony = version;
+        harmonyDisplay.textContent = version.charAt(0).toUpperCase() + version.slice(1);
+      }});
+    }});
+  }});
+
+  // Volume Control
   function updateSliderGradient(value) {{
     const percent = value * 100;
     volSlider.style.background = 'linear-gradient(to right, #5f6bff ' + percent + '%, #3a4150 ' + percent + '%)';
   }}
 
-  // Volume slider - control both tracks
   volSlider.addEventListener('input', e => {{
     const val = parseFloat(e.target.value);
     grooveWS.setVolume(val);
     lyricsWS.setVolume(val);
+    soloWS.setVolume(val);
+    harmonyWS.setVolume(val);
     updateSliderGradient(val);
   }});
 
-  // Speed control - control both tracks
+  // Speed Control
   speedSelect.addEventListener('change', e => {{
     const rate = parseFloat(e.target.value);
     grooveWS.setPlaybackRate(rate);
     lyricsWS.setPlaybackRate(rate);
+    soloWS.setPlaybackRate(rate);
+    harmonyWS.setPlaybackRate(rate);
   }});
 
-  // Seek both tracks together
+  // Seek Sync
   grooveWS.on('seek', (progress) => {{
     const time = progress * grooveWS.getDuration();
-    lyricsWS.setTime(Math.min(time, lyricsWS.getDuration() - 0.01));
+    syncTime(time);
   }});
 
-  // Click knob cycles A→B→C
-  document.getElementById('knob').addEventListener('click', () => {{
-    const next = (currentIdx + 1) % 3;
-    loadLyrics(next);
-  }});
-
-  // Click labels directly
-  labelEls.forEach(el => {{
-    el.addEventListener('click', (e) => {{
-      e.stopPropagation();
-      const idx = parseInt(el.getAttribute('data-idx'));
-      if (idx !== currentIdx) loadLyrics(idx);
-    }});
-  }});
-
-  // Keyboard shortcuts
+  // Keyboard Shortcuts
   document.addEventListener('keydown', (e) => {{
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     
@@ -607,25 +748,29 @@ html = f"""
         break;
       case '1':
         e.preventDefault();
-        if (currentIdx !== 0) loadLyrics(0);
+        if (currentLyrics !== 0) switchLyrics(0);
         break;
       case '2':
         e.preventDefault();
-        if (currentIdx !== 1) loadLyrics(1);
+        if (currentLyrics !== 1) switchLyrics(1);
         break;
       case '3':
         e.preventDefault();
-        if (currentIdx !== 2) loadLyrics(2);
+        if (currentLyrics !== 2) switchLyrics(2);
         break;
       case 'ArrowLeft':
         e.preventDefault();
         grooveWS.skip(-5);
         lyricsWS.skip(-5);
+        soloWS.skip(-5);
+        harmonyWS.skip(-5);
         break;
       case 'ArrowRight':
         e.preventDefault();
         grooveWS.skip(5);
         lyricsWS.skip(5);
+        soloWS.skip(5);
+        harmonyWS.skip(5);
         break;
       case 'ArrowUp':
         e.preventDefault();
@@ -633,6 +778,8 @@ html = f"""
         volSlider.value = newVolUp;
         grooveWS.setVolume(newVolUp);
         lyricsWS.setVolume(newVolUp);
+        soloWS.setVolume(newVolUp);
+        harmonyWS.setVolume(newVolUp);
         updateSliderGradient(newVolUp);
         break;
       case 'ArrowDown':
@@ -641,6 +788,8 @@ html = f"""
         volSlider.value = newVolDown;
         grooveWS.setVolume(newVolDown);
         lyricsWS.setVolume(newVolDown);
+        soloWS.setVolume(newVolDown);
+        harmonyWS.setVolume(newVolDown);
         updateSliderGradient(newVolDown);
         break;
     }}
@@ -650,9 +799,8 @@ html = f"""
   document.getElementById('waveform').style.cursor = 'pointer';
 
   // Initialize UI
-  setPointer(0);
-  setLabelActive(0);
+  setLyricsActive(0);
 </script>
 """
 
-st.components.v1.html(html, height=1100)
+st.components.v1.html(html, height=1200)
