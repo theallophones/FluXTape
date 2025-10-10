@@ -704,7 +704,8 @@ html = f"""
       el.classList.toggle('active', el.getAttribute('data-solo') === version);
     }});
     
-    const angle = version === 'A' ? 180 : 0;
+    // Use same angles as Lyrics: A=270° (9 o'clock), C=90° (3 o'clock)
+    const angle = version === 'A' ? 270 : 90;
     soloPointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
     soloDisplay.textContent = 'Take ' + version;
   }}
@@ -733,7 +734,8 @@ html = f"""
       el.classList.toggle('active', isWide === spatializeOn);
     }});
     
-    const angle = spatializeOn ? 0 : 180;
+    // Use same angles as Lyrics: narrow=270° (9 o'clock), wide=90° (3 o'clock)
+    const angle = spatializeOn ? 90 : 270;
     spatializePointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
     spatializeDisplay.textContent = spatializeOn ? 'Wide' : 'Narrow';
   }}
