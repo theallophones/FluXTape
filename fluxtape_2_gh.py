@@ -920,4 +920,4 @@ html = f"""
 </script>
 """
 
-st.components.v1.html(html, height=1600)
+st.components.v1.html(html, height=1900)
