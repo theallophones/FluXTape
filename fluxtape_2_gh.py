@@ -791,20 +791,18 @@ html = f"""
       ws.setTime(Math.min(time, ws.getDuration() - 0.01));
     }});
     
-    // If playing, we need to restart all at the new position
+    // If playing, restart all at the new position immediately (no setTimeout!)
     if (isPlaying) {{
       console.log('Was playing, restarting at new position');
       
-      // Pause everything first
+      // Step 1: Pause everything first
       grooveWS.pause();
       Object.values(stems).forEach(ws => ws.pause());
       
-      // Small delay to ensure all are stopped, then restart at exact same time
-      setTimeout(() => {{
-        const currentTime = grooveWS.getCurrentTime();
-        grooveWS.play(currentTime);
-        Object.values(stems).forEach(ws => ws.play(currentTime));
-      }}, 50);
+      // Step 2: Restart immediately at current time for precise Web Audio API sync
+      const currentTime = grooveWS.getCurrentTime();
+      grooveWS.play(currentTime);
+      Object.values(stems).forEach(ws => ws.play(currentTime));
     }}
   }});
 
