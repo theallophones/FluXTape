@@ -577,8 +577,13 @@ html = f"""
     }}
     
     isPlaying = true;
-    grooveWS.play();
-    Object.values(stems).forEach(ws => ws.play());
+    
+    // CRITICAL FIX: Capture current time and start all tracks at exact same position
+    const currentTime = grooveWS.getCurrentTime();
+    console.log('Starting all tracks at time:', currentTime);
+    
+    grooveWS.play(currentTime);
+    Object.values(stems).forEach(ws => ws.play(currentTime));
   }}
 
   function pauseAll() {{
