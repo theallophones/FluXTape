@@ -781,12 +781,31 @@ html = f"""
     Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
   }});
 
-  // Seek
+  // Seek - sync all stems when waveform is clicked
   grooveWS.on('seek', (progress) => {{
     const time = progress * grooveWS.getDuration();
+    console.log('Seeking to:', time);
+    
+    // Set all stems to the exact same position
     Object.values(stems).forEach(ws => {{
       ws.setTime(Math.min(time, ws.getDuration() - 0.01));
     }});
+    
+    // If playing, we need to restart all at the new position
+    if (isPlaying) {{
+      console.log('Was playing, restarting at new position');
+      
+      // Pause everything first
+      grooveWS.pause();
+      Object.values(stems).forEach(ws => ws.pause());
+      
+      // Small delay to ensure all are stopped, then restart at exact same time
+      setTimeout(() => {{
+        const currentTime = grooveWS.getCurrentTime();
+        grooveWS.play(currentTime);
+        Object.values(stems).forEach(ws => ws.play(currentTime));
+      }}, 50);
+    }}
   }});
 
   // Keyboard
