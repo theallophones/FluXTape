@@ -385,12 +385,24 @@ html = f"""
   const audioMap = {audio_map_json};
   const lyricsAngles = {{"A": 270, "B": 0, "C": 90}};
 
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audioContext = new AudioContext();
+  
+  const masterGain = audioContext.createGain();
+  masterGain.gain.value = 1.0;
+  masterGain.connect(audioContext.destination);
+  
+  const masterAnalyser = audioContext.createAnalyser();
+  masterAnalyser.fftSize = 2048;
+  masterGain.connect(masterAnalyser);
+
   const grooveWS = WaveSurfer.create({{
     container: '#waveform',
     waveColor: '#4a5568',
     progressColor: '#5f6bff',
     height: 140,
-    backend: 'MediaElement',
+    backend: 'WebAudio',
+    audioContext: audioContext,
     cursorWidth: 2,
     cursorColor: '#fff',
     barWidth: 3,
