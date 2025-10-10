@@ -127,7 +127,7 @@ html = f"""
   </div>
 
   <div class="control-section">
-    <div class="control-header">SOLO <span style="font-size:10px; font-weight:400; opacity:0.7;">(from 1:03)</span></div>
+    <div class="control-header">SOLO</div>
     <div class="knob-wrap-small">
       <div id="soloKnob" class="knob-small" title="Click to switch solo">
         <div id="soloPointer" class="pointer-small"></div>
@@ -474,18 +474,8 @@ html = f"""
   // Create shared audio context
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   const audioContext = new AudioContext();
-  
-  // Create master gain node (master bus) where all stems will be mixed
-  const masterGain = audioContext.createGain();
-  masterGain.gain.value = 1.0;
-  masterGain.connect(audioContext.destination);
-  
-  // Create analyser for waveform visualization connected to master bus
-  const masterAnalyser = audioContext.createAnalyser();
-  masterAnalyser.fftSize = 2048;
-  masterGain.connect(masterAnalyser);
 
-  // Create groove with WaveSurfer - will show visualization from master bus
+  // Create groove with WaveSurfer
   const grooveWS = WaveSurfer.create({{
     container: '#waveform',
     waveColor: '#4a5568',
@@ -601,17 +591,11 @@ html = f"""
 
   function updateVolumes() {{
     const vol = parseFloat(volSlider.value);
-    console.log('Updating volumes to:', vol, 'Current lyrics:', currentLyrics);
-    
     grooveWS.setVolume(vol);
     
     stems.lyricsA.setVolume(currentLyrics === 'A' ? vol : 0);
     stems.lyricsB.setVolume(currentLyrics === 'B' ? vol : 0);
     stems.lyricsC.setVolume(currentLyrics === 'C' ? vol : 0);
-    
-    console.log('LyricsA vol:', currentLyrics === 'A' ? vol : 0);
-    console.log('LyricsB vol:', currentLyrics === 'B' ? vol : 0);
-    console.log('LyricsC vol:', currentLyrics === 'C' ? vol : 0);
     
     stems.soloA.setVolume(currentSolo === 'A' ? vol : 0);
     stems.soloB.setVolume(currentSolo === 'B' ? vol : 0);
@@ -652,15 +636,6 @@ html = f"""
   grooveWS.on('ready', () => {{
     console.log('✓ Groove');
     updateTime();
-    
-    // Connect groove to master bus
-    const grooveBackend = grooveWS.backend;
-    if (grooveBackend && grooveBackend.gainNode) {{
-      grooveBackend.gainNode.disconnect();
-      grooveBackend.gainNode.connect(masterGain);
-      console.log('✓ Groove connected to master bus');
-    }}
-    
     checkReady();
   }});
 
@@ -668,15 +643,6 @@ html = f"""
     stems[key].load(audioMap[key]);
     stems[key].on('ready', () => {{
       console.log('✓', key);
-      
-      // Connect each stem to master bus
-      const backend = stems[key].backend;
-      if (backend && backend.gainNode) {{
-        backend.gainNode.disconnect();
-        backend.gainNode.connect(masterGain);
-        console.log('✓', key, 'connected to master bus');
-      }}
-      
       checkReady();
     }});
   }});
@@ -809,52 +775,12 @@ html = f"""
     Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
   }});
 
-  let isSeeking = false;
-  let wasPlayingBeforeSeek = false;
-
-  // Detect when seeking starts (user clicks/drags on waveform)
-  grooveWS.on('interaction', () => {{
-    if (isPlaying && !isSeeking) {{
-      console.log('Seeking started - pausing playback');
-      isSeeking = true;
-      wasPlayingBeforeSeek = true;
-      
-      // Pause everything immediately
-      grooveWS.pause();
-      Object.values(stems).forEach(ws => ws.pause());
-      isPlaying = false;
-    }}
-  }});
-
-  // Seek - sync all stems when waveform position changes
+  // Seek
   grooveWS.on('seek', (progress) => {{
-    const targetTime = progress * grooveWS.getDuration();
-    console.log('Seek to:', targetTime);
-    
-    // Sync all other stems to the new position
+    const time = progress * grooveWS.getDuration();
     Object.values(stems).forEach(ws => {{
-      ws.setTime(Math.min(targetTime, ws.getDuration() - 0.01));
+      ws.setTime(Math.min(time, ws.getDuration() - 0.01));
     }});
-    
-    // After a brief moment, restart playback if it was playing before
-    if (wasPlayingBeforeSeek) {{
-      setTimeout(() => {{
-        if (isSeeking) {{
-          console.log('Seek ended - restarting playback');
-          isSeeking = false;
-          wasPlayingBeforeSeek = false;
-          
-          // Get the exact position where groove ended up
-          const exactTime = grooveWS.getCurrentTime();
-          console.log('Restarting all at exact time:', exactTime);
-          
-          // Start all tracks at the EXACT same time
-          isPlaying = true;
-          grooveWS.play(exactTime);
-          Object.values(stems).forEach(ws => ws.play(exactTime));
-        }}
-      }}, 100);
-    }}
   }});
 
   // Keyboard
