@@ -571,29 +571,17 @@ html = f"""
       const vol = parseFloat(volSlider.value);
       console.log('Setting initial volumes to:', vol);
       
+      // We only control the WaveSurfer volume, which controls the gain node connected to masterGain
       grooveWS.setVolume(vol);
       console.log('Groove volume set to:', vol);
       
       stems.lyricsA.setVolume(vol);
-      console.log('LyricsA volume set to:', vol);
-      
       stems.lyricsB.setVolume(0);
-      console.log('LyricsB volume set to: 0');
-      
       stems.lyricsC.setVolume(0);
-      console.log('LyricsC volume set to: 0');
-      
       stems.soloA.setVolume(vol);
-      console.log('SoloA volume set to:', vol);
-      
       stems.soloB.setVolume(0);
-      console.log('SoloB volume set to: 0');
-      
       stems.harmony_narrow.setVolume(vol);
-      console.log('Harmony_narrow volume set to:', vol);
-      
       stems.harmony_wide.setVolume(0);
-      console.log('Harmony_wide volume set to: 0');
       
       console.log('✅ Ready to play with sound!');
     }}
@@ -608,10 +596,6 @@ html = f"""
     stems.lyricsA.setVolume(currentLyrics === 'A' ? vol : 0);
     stems.lyricsB.setVolume(currentLyrics === 'B' ? vol : 0);
     stems.lyricsC.setVolume(currentLyrics === 'C' ? vol : 0);
-    
-    console.log('LyricsA vol:', currentLyrics === 'A' ? vol : 0);
-    console.log('LyricsB vol:', currentLyrics === 'B' ? vol : 0);
-    console.log('LyricsC vol:', currentLyrics === 'C' ? vol : 0);
     
     stems.soloA.setVolume(currentSolo === 'A' ? vol : 0);
     stems.soloB.setVolume(currentSolo === 'B' ? vol : 0);
@@ -633,7 +617,7 @@ html = f"""
     
     isPlaying = true;
     
-    // CRITICAL FIX: Capture current time and start all tracks at exact same position
+    // CRITICAL: Capture current time and start all tracks at exact same position
     const currentTime = grooveWS.getCurrentTime();
     console.log('Starting all tracks at time:', currentTime);
     
@@ -809,51 +793,30 @@ html = f"""
     Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
   }});
 
-  let isSeeking = false;
-  let wasPlayingBeforeSeek = false;
-
-  // Detect when seeking starts (user clicks/drags on waveform)
-  grooveWS.on('interaction', () => {{
-    if (isPlaying && !isSeeking) {{
-      console.log('Seeking started - pausing playback');
-      isSeeking = true;
-      wasPlayingBeforeSeek = true;
-      
-      // Pause everything immediately
-      grooveWS.pause();
-      Object.values(stems).forEach(ws => ws.pause());
-      isPlaying = false;
-    }}
-  }});
-
-  // Seek - sync all stems when waveform position changes
+  // Seek - sync all stems when waveform is clicked
+  // CRITICAL FIX: Removed asynchronous logic to ensure high-precision Web Audio clock sync
   grooveWS.on('seek', (progress) => {{
-    const targetTime = progress * grooveWS.getDuration();
-    console.log('Seek to:', targetTime);
+    const time = progress * grooveWS.getDuration();
+    console.log('Seeking to:', time);
     
-    // Sync all other stems to the new position
+    // Set all stems to the exact same position (Master track is set by the click)
     Object.values(stems).forEach(ws => {{
-      ws.setTime(Math.min(targetTime, ws.getDuration() - 0.01));
+      // Setting time slightly before the end to avoid Wavesurfer errors on exact duration
+      ws.setTime(Math.min(time, ws.getDuration() - 0.01));
     }});
     
-    // After a brief moment, restart playback if it was playing before
-    if (wasPlayingBeforeSeek) {{
-      setTimeout(() => {{
-        if (isSeeking) {{
-          console.log('Seek ended - restarting playback');
-          isSeeking = false;
-          wasPlayingBeforeSeek = false;
-          
-          // Get the exact position where groove ended up
-          const exactTime = grooveWS.getCurrentTime();
-          console.log('Restarting all at exact time:', exactTime);
-          
-          // Start all tracks at the EXACT same time
-          isPlaying = true;
-          grooveWS.play(exactTime);
-          Object.values(stems).forEach(ws => ws.play(exactTime));
-        }}
-      }}, 100);
+    // If playing, we need to restart all at the new position synchronously
+    if (isPlaying) {{
+      console.log('Was playing, restarting at new position');
+      
+      // Pause everything first
+      grooveWS.pause();
+      Object.values(stems).forEach(ws => ws.pause());
+      
+      // Relaunch immediately (synchronously) to leverage Web Audio API's precise start time
+      const currentTime = grooveWS.getCurrentTime();
+      grooveWS.play(currentTime);
+      Object.values(stems).forEach(ws => ws.play(currentTime));
     }}
   }});
 
@@ -888,12 +851,14 @@ html = f"""
       case 'ArrowLeft':
         e.preventDefault();
         console.log('Arrow Left: seeking backward');
+        // Use skip for both the master and the stems
         grooveWS.skip(-5);
         Object.values(stems).forEach(ws => ws.skip(-5));
         break;
       case 'ArrowRight':
         e.preventDefault();
         console.log('Arrow Right: seeking forward');
+        // Use skip for both the master and the stems
         grooveWS.skip(5);
         Object.values(stems).forEach(ws => ws.skip(5));
         break;
