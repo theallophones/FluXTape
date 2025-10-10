@@ -340,9 +340,9 @@ html = f"""
   .labelB-small {{ top: -15px; left: 50%; transform: translateX(-50%); }}
   .labelC-small {{ top: 50%; right: -20px; transform: translateY(-50%); }}
   
-  /* For 2-option knobs (Solo, Spatialize) - left and right only */
-  .labelLeft-small {{ top: 50%; left: -25px; transform: translateY(-50%); }}
-  .labelRight-small {{ top: 50%; right: -25px; transform: translateY(-50%); }}
+  /* For 2-option knobs (Solo, Spatialize) - left and right only, matching Lyrics A and C positions */
+  .labelLeft-small {{ top: 50%; left: -30px; transform: translateY(-50%); }}
+  .labelRight-small {{ top: 50%; right: -30px; transform: translateY(-50%); }}
 
   .toggle-container {{
     display: flex;
@@ -766,37 +766,47 @@ html = f"""
 
   // Keyboard
   document.addEventListener('keydown', (e) => {{
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    // Don't trigger if user is typing in an input field
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    
+    console.log('Key pressed:', e.key);
     
     switch(e.key) {{
       case ' ':
         e.preventDefault();
+        console.log('Space: toggling play/pause');
         playBtn.click();
         break;
       case '1':
         e.preventDefault();
+        console.log('1: switching to Lyrics A');
         switchLyrics('A');
         break;
       case '2':
         e.preventDefault();
+        console.log('2: switching to Lyrics B');
         switchLyrics('B');
         break;
       case '3':
         e.preventDefault();
+        console.log('3: switching to Lyrics C');
         switchLyrics('C');
         break;
       case 'ArrowLeft':
         e.preventDefault();
+        console.log('Arrow Left: seeking backward');
         grooveWS.skip(-5);
         Object.values(stems).forEach(ws => ws.skip(-5));
         break;
       case 'ArrowRight':
         e.preventDefault();
+        console.log('Arrow Right: seeking forward');
         grooveWS.skip(5);
         Object.values(stems).forEach(ws => ws.skip(5));
         break;
       case 'ArrowUp':
         e.preventDefault();
+        console.log('Arrow Up: volume up');
         const newVolUp = Math.min(1, parseFloat(volSlider.value) + 0.1);
         volSlider.value = newVolUp;
         updateSliderGradient(newVolUp);
@@ -804,6 +814,7 @@ html = f"""
         break;
       case 'ArrowDown':
         e.preventDefault();
+        console.log('Arrow Down: volume down');
         const newVolDown = Math.max(0, parseFloat(volSlider.value) - 0.1);
         volSlider.value = newVolDown;
         updateSliderGradient(newVolDown);
