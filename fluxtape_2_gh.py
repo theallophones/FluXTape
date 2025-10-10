@@ -393,6 +393,54 @@ html = f"""
     height: 20%;
     opacity: 0.3;
   }}
+
+  .volume-knob-container {{
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+  }}
+
+  .volume-knob {{
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #5f6bff 100%, #3a4150 0%);
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }}
+  .volume-knob:hover {{ height: 8px; }}
+  .volume-knob::-webkit-slider-thumb {{
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #cfd8dc;
+    box-shadow: 0 2px 6px rgba(200,200,200,.7);
+    transition: transform 0.2s ease;
+    cursor: grab;
+  }}
+  .volume-knob::-webkit-slider-thumb:hover {{ transform: scale(1.2); }}
+  .volume-knob::-webkit-slider-thumb:active {{ cursor: grabbing; }}
+  .volume-knob::-moz-range-thumb {{
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #cfd8dc;
+    box-shadow: 0 2px 6px rgba(200,200,200,.7);
+    cursor: pointer;
+    border: none;
+  }}
+
+  .volume-label {{
+    margin-top: 8px;
+    color: #8b92a8;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+  }}
 </style>
 
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
@@ -459,6 +507,11 @@ html = f"""
   let isPlaying = false;
   let allReady = false;
   let readyCount = 0;
+  
+  let lyricsVolume = 1.0;
+  let soloVolume = 1.0;
+  let spatializeVolume = 1.0;
+  let backVocalsVolume = 1.0;
 
   const playBtn = document.getElementById('playBtn');
   const loadingStatus = document.getElementById('loadingStatus');
@@ -507,12 +560,12 @@ html = f"""
       const vol = parseFloat(volSlider.value);
       
       grooveWS.setVolume(vol);
-      stems.lyricsA.setVolume(vol);
+      stems.lyricsA.setVolume(vol * lyricsVolume);
       stems.lyricsB.setVolume(0);
       stems.lyricsC.setVolume(0);
-      stems.soloA.setVolume(vol);
+      stems.soloA.setVolume(vol * soloVolume);
       stems.soloB.setVolume(0);
-      stems.harmony_narrow.setVolume(vol);
+      stems.harmony_narrow.setVolume(vol * spatializeVolume);
       stems.harmony_wide.setVolume(0);
       stems.adlibA.setVolume(0);
       stems.adlibB.setVolume(0);
@@ -523,19 +576,27 @@ html = f"""
   }}
 
   function updateVolumes() {{
-    const vol = parseFloat(volSlider.value);
+    const masterVol = parseFloat(volSlider.value);
     
-    grooveWS.setVolume(vol);
-    stems.lyricsA.setVolume(currentLyrics === 'A' ? vol : 0);
-    stems.lyricsB.setVolume(currentLyrics === 'B' ? vol : 0);
-    stems.lyricsC.setVolume(currentLyrics === 'C' ? vol : 0);
-    stems.soloA.setVolume(currentSolo === 'A' ? vol : 0);
-    stems.soloB.setVolume(currentSolo === 'B' ? vol : 0);
-    stems.harmony_narrow.setVolume(!spatializeOn ? vol : 0);
-    stems.harmony_wide.setVolume(spatializeOn ? vol : 0);
-    stems.adlibA.setVolume(backVocalsOn && currentLyrics === 'A' ? vol : 0);
-    stems.adlibB.setVolume(backVocalsOn && currentLyrics === 'B' ? vol : 0);
-    stems.adlibC.setVolume(backVocalsOn && currentLyrics === 'C' ? vol : 0);
+    grooveWS.setVolume(masterVol);
+    
+    const lyricsVol = masterVol * lyricsVolume;
+    stems.lyricsA.setVolume(currentLyrics === 'A' ? lyricsVol : 0);
+    stems.lyricsB.setVolume(currentLyrics === 'B' ? lyricsVol : 0);
+    stems.lyricsC.setVolume(currentLyrics === 'C' ? lyricsVol : 0);
+    
+    const soloVol = masterVol * soloVolume;
+    stems.soloA.setVolume(currentSolo === 'A' ? soloVol : 0);
+    stems.soloB.setVolume(currentSolo === 'B' ? soloVol : 0);
+    
+    const spatVol = masterVol * spatializeVolume;
+    stems.harmony_narrow.setVolume(!spatializeOn ? spatVol : 0);
+    stems.harmony_wide.setVolume(spatializeOn ? spatVol : 0);
+    
+    const backVol = masterVol * backVocalsVolume;
+    stems.adlibA.setVolume(backVocalsOn && currentLyrics === 'A' ? backVol : 0);
+    stems.adlibB.setVolume(backVocalsOn && currentLyrics === 'B' ? backVol : 0);
+    stems.adlibC.setVolume(backVocalsOn && currentLyrics === 'C' ? backVol : 0);
   }}
 
   function playAll() {{
@@ -815,6 +876,59 @@ html = f"""
 
   document.getElementById('waveform').style.cursor = 'pointer';
   updateSliderGradient(1);
+
+  // Individual volume knobs
+  const lyricsVolumeSlider = document.getElementById('lyricsVolume');
+  const lyricsVolumeDisplay = document.getElementById('lyricsVolumeDisplay');
+  const soloVolumeSlider = document.getElementById('soloVolume');
+  const soloVolumeDisplay = document.getElementById('soloVolumeDisplay');
+  const spatializeVolumeSlider = document.getElementById('spatializeVolume');
+  const spatializeVolumeDisplay = document.getElementById('spatializeVolumeDisplay');
+  const backVocalsVolumeSlider = document.getElementById('backVocalsVolume');
+  const backVocalsVolumeDisplay = document.getElementById('backVocalsVolumeDisplay');
+
+  function updateVolumeKnobGradient(slider, value) {{
+    const percent = value;
+    slider.style.background = 'linear-gradient(to right, #5f6bff ' + percent + '%, #3a4150 ' + percent + '%)';
+  }}
+
+  lyricsVolumeSlider.addEventListener('input', e => {{
+    const val = parseInt(e.target.value);
+    lyricsVolume = val / 100;
+    lyricsVolumeDisplay.textContent = val + '%';
+    updateVolumeKnobGradient(lyricsVolumeSlider, val);
+    updateVolumes();
+  }});
+
+  soloVolumeSlider.addEventListener('input', e => {{
+    const val = parseInt(e.target.value);
+    soloVolume = val / 100;
+    soloVolumeDisplay.textContent = val + '%';
+    updateVolumeKnobGradient(soloVolumeSlider, val);
+    updateVolumes();
+  }});
+
+  spatializeVolumeSlider.addEventListener('input', e => {{
+    const val = parseInt(e.target.value);
+    spatializeVolume = val / 100;
+    spatializeVolumeDisplay.textContent = val + '%';
+    updateVolumeKnobGradient(spatializeVolumeSlider, val);
+    updateVolumes();
+  }});
+
+  backVocalsVolumeSlider.addEventListener('input', e => {{
+    const val = parseInt(e.target.value);
+    backVocalsVolume = val / 100;
+    backVocalsVolumeDisplay.textContent = val + '%';
+    updateVolumeKnobGradient(backVocalsVolumeSlider, val);
+    updateVolumes();
+  }});
+
+  // Initialize volume knob gradients
+  updateVolumeKnobGradient(lyricsVolumeSlider, 100);
+  updateVolumeKnobGradient(soloVolumeSlider, 100);
+  updateVolumeKnobGradient(spatializeVolumeSlider, 100);
+  updateVolumeKnobGradient(backVocalsVolumeSlider, 100);
 </script>
 """
 
