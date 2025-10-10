@@ -809,40 +809,52 @@ html = f"""
     Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
   }});
 
-  // Seek - sync all stems when waveform is clicked
-  grooveWS.on('seek', (progress) => {{
-    const targetTime = progress * grooveWS.getDuration();
-    console.log('Seek event fired, target time:', targetTime);
-    
-    const wasPlaying = isPlaying;
-    
-    // Always pause everything first
-    if (wasPlaying) {{
-      isPlaying = false;
+  let isSeeking = false;
+  let wasPlayingBeforeSeek = false;
+
+  // Detect when seeking starts (user clicks/drags on waveform)
+  grooveWS.on('interaction', () => {{
+    if (isPlaying && !isSeeking) {{
+      console.log('Seeking started - pausing playback');
+      isSeeking = true;
+      wasPlayingBeforeSeek = true;
+      
+      // Pause everything immediately
       grooveWS.pause();
       Object.values(stems).forEach(ws => ws.pause());
-      console.log('Paused all tracks');
+      isPlaying = false;
     }}
+  }});
+
+  // Seek - sync all stems when waveform position changes
+  grooveWS.on('seek', (progress) => {{
+    const targetTime = progress * grooveWS.getDuration();
+    console.log('Seek to:', targetTime);
     
-    // Wait a tick for groove to actually update its position after the seek event
-    requestAnimationFrame(() => {{
-      // Now groove should be at the new position
-      const actualTime = grooveWS.getCurrentTime();
-      console.log('After seek, groove is at:', actualTime);
-      
-      // Sync all other stems to this exact position
-      Object.values(stems).forEach(ws => {{
-        ws.setTime(Math.min(actualTime, ws.getDuration() - 0.01));
-      }});
-      
-      // If it was playing, restart everything at the EXACT same position
-      if (wasPlaying) {{
-        console.log('Restarting all at:', actualTime);
-        isPlaying = true;
-        grooveWS.play(actualTime);
-        Object.values(stems).forEach(ws => ws.play(actualTime));
-      }}
+    // Sync all other stems to the new position
+    Object.values(stems).forEach(ws => {{
+      ws.setTime(Math.min(targetTime, ws.getDuration() - 0.01));
     }});
+    
+    // After a brief moment, restart playback if it was playing before
+    if (wasPlayingBeforeSeek) {{
+      setTimeout(() => {{
+        if (isSeeking) {{
+          console.log('Seek ended - restarting playback');
+          isSeeking = false;
+          wasPlayingBeforeSeek = false;
+          
+          // Get the exact position where groove ended up
+          const exactTime = grooveWS.getCurrentTime();
+          console.log('Restarting all at exact time:', exactTime);
+          
+          // Start all tracks at the EXACT same time
+          isPlaying = true;
+          grooveWS.play(exactTime);
+          Object.values(stems).forEach(ws => ws.play(exactTime));
+        }}
+      }}, 100);
+    }}
   }});
 
   // Keyboard
