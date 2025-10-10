@@ -20,6 +20,48 @@ footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
+audio_files = {
+    "groove": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/groove.mp3",
+    "lyricsA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsA.mp3",
+    "lyricsB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsB.mp3",
+    "lyricsC": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsC.mp3",
+    "soloA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/soloA.mp3",
+    "soloB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/soloB.mp3",
+    "harmony_narrow": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/harmony_narrow.mp3",
+    "harmony_wide": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/harmony_wide.mp3",
+    "adlibA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibA.mp3",
+    "adlibB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibB.mp3",
+    "adlibC": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibC.mp3",
+}
+
+def file_to_data_url(path, mime="audio/mpeg"):
+    try:
+        if not os.path.exists(path):
+            st.error(f"❌ Audio file not found: {path}")
+            return None
+        
+        file_size = os.path.getsize(path)
+        print(f"Loading {path}: {file_size / (1024*1024):.2f} MB")
+        
+        with open(path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("utf-8")
+        
+        print(f"Base64 encoded {path}: {len(b64)} characters")
+        return f"data:{mime};base64,{b64}"
+    except Exception as e:
+        st.error(f"❌ Error loading {path}: {str(e)}")
+        return None
+
+audio_map = {}
+for k, v in audio_files.items():
+    data_url = file_to_data_url(v)
+    if data_url:
+        audio_map[k] = data_url
+
+if len(audio_map) < 11:
+    st.error("❌ Not all audio files could be loaded.")
+    st.stop()
+
 html = f"""
 <div style="text-align:center; margin-bottom:10px;">
   <h1 style="font-family:'Inter', sans-serif; font-weight:800; color:#ffffff; font-size:48px; margin-bottom:5px; letter-spacing:-1px;">
@@ -840,22 +882,18 @@ html = f"""
 
   let isSeeking = false;
   let wasPlayingBeforeSeek = false;
-  let seekTimeout = null;
 
   // Detect when seeking starts (user clicks/drags on waveform)
   grooveWS.on('interaction', () => {{
-    if (!isSeeking) {{
-      console.log('Seeking started');
+    if (isPlaying && !isSeeking) {{
+      console.log('Seeking started - pausing playback');
       isSeeking = true;
-      wasPlayingBeforeSeek = isPlaying;
+      wasPlayingBeforeSeek = true;
       
-      // Pause everything immediately if playing
-      if (isPlaying) {{
-        console.log('Pausing for seek');
-        grooveWS.pause();
-        Object.values(stems).forEach(ws => ws.pause());
-        isPlaying = false;
-      }}
+      // Pause everything immediately
+      grooveWS.pause();
+      Object.values(stems).forEach(ws => ws.pause());
+      isPlaying = false;
     }}
   }});
 
@@ -864,42 +902,30 @@ html = f"""
     const targetTime = progress * grooveWS.getDuration();
     console.log('Seek to:', targetTime);
     
-    // Clear any pending restart
-    if (seekTimeout) {{
-      clearTimeout(seekTimeout);
-    }}
-    
-    // Sync all other stems to the new position immediately
+    // Sync all other stems to the new position
     Object.values(stems).forEach(ws => {{
-      ws.seekTo(progress);
+      ws.setTime(Math.min(targetTime, ws.getDuration() - 0.01));
     }});
     
-    // Wait for user to finish dragging before restarting playback
-    seekTimeout = setTimeout(() => {{
-      if (wasPlayingBeforeSeek) {{
-        console.log('Seek ended - restarting playback');
-        
-        // Get the exact final position
-        const exactTime = grooveWS.getCurrentTime();
-        console.log('Restarting all at exact time:', exactTime);
-        
-        // Ensure all stems are at exact same position before starting
-        Object.values(stems).forEach(ws => {{
-          ws.setTime(exactTime);
-        }});
-        
-        // Small delay to ensure all are positioned, then start
-        setTimeout(() => {{
+    // After a brief moment, restart playback if it was playing before
+    if (wasPlayingBeforeSeek) {{
+      setTimeout(() => {{
+        if (isSeeking) {{
+          console.log('Seek ended - restarting playback');
+          isSeeking = false;
+          wasPlayingBeforeSeek = false;
+          
+          // Get the exact position where groove ended up
+          const exactTime = grooveWS.getCurrentTime();
+          console.log('Restarting all at exact time:', exactTime);
+          
+          // Start all tracks at the EXACT same time
           isPlaying = true;
-          grooveWS.play();
-          Object.values(stems).forEach(ws => ws.play());
-        }}, 50);
-      }}
-      
-      isSeeking = false;
-      wasPlayingBeforeSeek = false;
-      seekTimeout = null;
-    }}, 200);
+          grooveWS.play(exactTime);
+          Object.values(stems).forEach(ws => ws.play(exactTime));
+        }}
+      }}, 100);
+    }}
   }});
 
   // Keyboard
