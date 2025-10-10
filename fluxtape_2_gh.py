@@ -59,7 +59,7 @@ html = f"""
     FluX-Tape
   </h1>
   <h3 style="font-family:'Inter', sans-serif; font-weight:400; color:#8b92a8; font-size:16px; margin-top:0; letter-spacing:0.5px;">
-    Complete Multi-Stem System
+    Songs as Probability Clouds
   </h3>
   <div style="margin-top:15px;">
     <button id="playBtn" class="play-btn" title="Play/Pause (Space)">▶</button>
@@ -130,12 +130,11 @@ html = f"""
   </div>
 
   <div class="control-section">
-    <div class="control-header">HARMONY</div>
-    <div class="toggle-container">
-      <button class="toggle-btn active" data-harmony="narrow">Narrow</button>
-      <button class="toggle-btn" data-harmony="wide">Wide</button>
+    <div class="control-header">SPATIALIZE</div>
+    <div style="display:flex; justify-content:center;">
+      <button id="spatializeBtn" class="spatialize-btn">OFF</button>
     </div>
-    <div id="harmonyDisplay" class="version-badge">Narrow</div>
+    <div id="spatializeDisplay" class="version-badge">Narrow</div>
   </div>
 </div>
 
@@ -356,6 +355,29 @@ html = f"""
     box-shadow: 0 4px 12px rgba(76,175,80,0.4);
   }}
 
+  .spatialize-btn {{
+    min-width: 120px;
+    background: #2a2f3a;
+    color: #8b92a8;
+    border: 2px solid #3a4150;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }}
+  .spatialize-btn:hover {{
+    background: #3a4150;
+    border-color: #4a5160;
+  }}
+  .spatialize-btn.active {{
+    background: #4CAF50;
+    color: #fff;
+    border-color: #66BB6A;
+    box-shadow: 0 4px 12px rgba(76,175,80,0.4);
+  }}
+
   .slider {{
     -webkit-appearance: none;
     width: 300px;
@@ -430,7 +452,15 @@ html = f"""
   const audioMap = {audio_map};
   const lyricsAngles = {{A: 270, B: 0, C: 90}};
 
-  // Create visible groove waveform
+  // Create audio elements directly
+  const audioElements = {{}};
+  Object.keys(audioMap).forEach(key => {{
+    const audio = new Audio(audioMap[key]);
+    audio.preload = 'auto';
+    audioElements[key] = audio;
+  }});
+
+  // Create groove waveform
   const grooveWS = WaveSurfer.create({{
     container: '#waveform',
     waveColor: '#4a5568',
@@ -446,31 +476,12 @@ html = f"""
     normalize: true,
   }});
 
-  // Create hidden WaveSurfer instances for all other stems
-  function createHiddenWS() {{
-    const div = document.createElement('div');
-    div.style.display = 'none';
-    document.body.appendChild(div);
-    return WaveSurfer.create({{ container: div, backend: 'WebAudio' }});
-  }}
-
-  const stems = {{
-    lyricsA: createHiddenWS(),
-    lyricsB: createHiddenWS(),
-    lyricsC: createHiddenWS(),
-    soloA: createHiddenWS(),
-    soloB: createHiddenWS(),
-    harmony_narrow: createHiddenWS(),
-    harmony_wide: createHiddenWS()
-  }};
-
   // State
   let currentLyrics = 'A';
   let currentSolo = 'A';
-  let currentHarmony = 'narrow';
+  let spatializeOn = false;
   let isPlaying = false;
-  let allReady = false;
-  let readyCount = 0;
+  let grooveReady = false;
 
   // UI Elements
   const playBtn = document.getElementById('playBtn');
@@ -482,7 +493,8 @@ html = f"""
   const visualizer = document.querySelector('.visualizer-container');
   const lyricsDisplay = document.getElementById('lyricsDisplay');
   const soloDisplay = document.getElementById('soloDisplay');
-  const harmonyDisplay = document.getElementById('harmonyDisplay');
+  const spatializeBtn = document.getElementById('spatializeBtn');
+  const spatializeDisplay = document.getElementById('spatializeDisplay');
 
   // Helper Functions
   function formatTime(sec) {{
@@ -492,109 +504,80 @@ html = f"""
   }}
 
   function updateTime() {{
-    const cur = grooveWS.getCurrentTime();
-    const total = grooveWS.getDuration();
+    const cur = audioElements.groove.currentTime;
+    const total = audioElements.groove.duration;
     timeDisplay.textContent = formatTime(cur) + ' / ' + formatTime(total);
   }}
 
-  function checkReady() {{
-    readyCount++;
-    console.log('Stem ready:', readyCount + '/8');
-    if (readyCount === 8) {{
-      allReady = true;
-      console.log('✅ All stems loaded!');
-      
-      // CRITICAL: Set initial volumes immediately
-      const vol = parseFloat(volSlider.value);
-      const rate = parseFloat(speedSelect.value);
-      
-      grooveWS.setVolume(vol);
-      grooveWS.setPlaybackRate(rate);
-      
-      // Set active stems to full volume, inactive to 0
-      stems.lyricsA.setVolume(vol);
-      stems.lyricsB.setVolume(0);
-      stems.lyricsC.setVolume(0);
-      stems.soloA.setVolume(vol);
-      stems.soloB.setVolume(0);
-      stems.harmony_narrow.setVolume(vol);
-      stems.harmony_wide.setVolume(0);
-      
-      // Set playback rate for all
-      Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
-      
-      console.log('✅ Initial volumes set - ready to play!');
-    }}
-  }}
-
-  function updateActiveStemVolumes() {{
-    const vol = parseFloat(volSlider.value);
-    const rate = parseFloat(speedSelect.value);
-    
-    // Groove always plays
-    grooveWS.setVolume(vol);
-    grooveWS.setPlaybackRate(rate);
-    
-    // Update all stems
-    Object.keys(stems).forEach(key => {{
-      const ws = stems[key];
-      ws.setPlaybackRate(rate);
-      
-      // Only unmute active stems
-      if (key === 'lyrics' + currentLyrics || 
-          key === 'solo' + currentSolo || 
-          key === 'harmony_' + currentHarmony) {{
-        ws.setVolume(vol);
-      }} else {{
-        ws.setVolume(0); // Mute inactive
+  function syncAllToGroove() {{
+    const time = audioElements.groove.currentTime;
+    Object.keys(audioElements).forEach(key => {{
+      if (key !== 'groove') {{
+        audioElements[key].currentTime = time;
       }}
     }});
   }}
 
+  function updateVolumes() {{
+    const vol = parseFloat(volSlider.value);
+    
+    // Groove always plays
+    audioElements.groove.volume = vol;
+    
+    // Lyrics
+    audioElements.lyricsA.volume = currentLyrics === 'A' ? vol : 0;
+    audioElements.lyricsB.volume = currentLyrics === 'B' ? vol : 0;
+    audioElements.lyricsC.volume = currentLyrics === 'C' ? vol : 0;
+    
+    // Solo
+    audioElements.soloA.volume = currentSolo === 'A' ? vol : 0;
+    audioElements.soloB.volume = currentSolo === 'B' ? vol : 0;
+    
+    // Spatialize
+    audioElements.harmony_narrow.volume = !spatializeOn ? vol : 0;
+    audioElements.harmony_wide.volume = spatializeOn ? vol : 0;
+  }}
+
+  function updateSpeed() {{
+    const rate = parseFloat(speedSelect.value);
+    Object.values(audioElements).forEach(audio => {{
+      audio.playbackRate = rate;
+    }});
+  }}
+
   function playAll() {{
-    if (!allReady) {{
-      console.warn('Not all stems ready yet');
-      return;
-    }}
+    if (!grooveReady) return;
     isPlaying = true;
-    grooveWS.play();
-    Object.values(stems).forEach(ws => ws.play());
+    syncAllToGroove();
+    Object.values(audioElements).forEach(audio => audio.play());
   }}
 
   function pauseAll() {{
     isPlaying = false;
-    grooveWS.pause();
-    Object.values(stems).forEach(ws => ws.pause());
+    Object.values(audioElements).forEach(audio => audio.pause());
   }}
 
-  // Load all 8 stems at startup
-  console.log('Loading groove...');
+  // Load groove into waveform
   grooveWS.load(audioMap.groove);
   grooveWS.on('ready', () => {{
-    console.log('✓ Groove ready');
+    grooveReady = true;
+    console.log('✅ Groove waveform ready');
     updateTime();
-    checkReady();
+    updateVolumes();
+    updateSpeed();
   }});
 
-  Object.keys(stems).forEach(key => {{
-    console.log('Loading ' + key + '...');
-    stems[key].load(audioMap[key]);
-    stems[key].on('ready', () => {{
-      console.log('✓ ' + key + ' ready');
-      checkReady();
-    }});
-  }});
-
-  // Event Handlers
-  grooveWS.on('audioprocess', updateTime);
-  grooveWS.on('finish', () => {{
+  // Sync audio elements on timeupdate
+  audioElements.groove.addEventListener('timeupdate', updateTime);
+  
+  audioElements.groove.addEventListener('ended', () => {{
     pauseAll();
     playBtn.textContent = '▶';
     playBtn.classList.remove('pause');
     visualizer.classList.add('paused');
   }});
 
-  // Play/Pause Button
+  // Play/Pause
   playBtn.addEventListener('click', () => {{
     if (isPlaying) {{
       pauseAll();
@@ -620,12 +603,8 @@ html = f"""
 
   function switchLyrics(version) {{
     if (version === currentLyrics) return;
-    
-    // Mute old, unmute new
-    stems['lyrics' + currentLyrics].setVolume(0);
-    stems['lyrics' + version].setVolume(parseFloat(volSlider.value));
-    
     currentLyrics = version;
+    updateVolumes();
     setLyricsActive(version);
   }}
 
@@ -648,34 +627,29 @@ html = f"""
       const version = btn.getAttribute('data-solo');
       if (version === currentSolo) return;
       
-      // Mute old, unmute new
-      stems['solo' + currentSolo].setVolume(0);
-      stems['solo' + version].setVolume(parseFloat(volSlider.value));
+      currentSolo = version;
+      updateVolumes();
       
       document.querySelectorAll('[data-solo]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      
-      currentSolo = version;
       soloDisplay.textContent = 'Solo ' + version;
     }});
   }});
 
-  // Harmony Controls
-  document.querySelectorAll('[data-harmony]').forEach(btn => {{
-    btn.addEventListener('click', () => {{
-      const version = btn.getAttribute('data-harmony');
-      if (version === currentHarmony) return;
-      
-      // Mute old, unmute new
-      stems['harmony_' + currentHarmony].setVolume(0);
-      stems['harmony_' + version].setVolume(parseFloat(volSlider.value));
-      
-      document.querySelectorAll('[data-harmony]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      
-      currentHarmony = version;
-      harmonyDisplay.textContent = version.charAt(0).toUpperCase() + version.slice(1);
-    }});
+  // Spatialize Control
+  spatializeBtn.addEventListener('click', () => {{
+    spatializeOn = !spatializeOn;
+    updateVolumes();
+    
+    if (spatializeOn) {{
+      spatializeBtn.classList.add('active');
+      spatializeBtn.textContent = 'ON';
+      spatializeDisplay.textContent = 'Wide';
+    }} else {{
+      spatializeBtn.classList.remove('active');
+      spatializeBtn.textContent = 'OFF';
+      spatializeDisplay.textContent = 'Narrow';
+    }}
   }});
 
   // Volume Control
@@ -685,24 +659,20 @@ html = f"""
   }}
 
   volSlider.addEventListener('input', e => {{
-    const val = parseFloat(e.target.value);
-    updateSliderGradient(val);
-    updateActiveStemVolumes();
+    updateSliderGradient(e.target.value);
+    updateVolumes();
   }});
 
   // Speed Control
-  speedSelect.addEventListener('change', e => {{
-    const rate = parseFloat(e.target.value);
-    grooveWS.setPlaybackRate(rate);
-    Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
+  speedSelect.addEventListener('change', () => {{
+    updateSpeed();
   }});
 
-  // Seek Sync - when groove seeks, all stems follow
+  // Seek via waveform
   grooveWS.on('seek', (progress) => {{
-    const time = progress * grooveWS.getDuration();
-    Object.values(stems).forEach(ws => {{
-      const targetTime = Math.min(time, ws.getDuration() - 0.01);
-      ws.setTime(targetTime);
+    const time = progress * audioElements.groove.duration;
+    Object.values(audioElements).forEach(audio => {{
+      audio.currentTime = time;
     }});
   }});
 
@@ -729,27 +699,29 @@ html = f"""
         break;
       case 'ArrowLeft':
         e.preventDefault();
-        grooveWS.skip(-5);
-        Object.values(stems).forEach(ws => ws.skip(-5));
+        Object.values(audioElements).forEach(audio => {{
+          audio.currentTime = Math.max(0, audio.currentTime - 5);
+        }});
         break;
       case 'ArrowRight':
         e.preventDefault();
-        grooveWS.skip(5);
-        Object.values(stems).forEach(ws => ws.skip(5));
+        Object.values(audioElements).forEach(audio => {{
+          audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
+        }});
         break;
       case 'ArrowUp':
         e.preventDefault();
         const newVolUp = Math.min(1, parseFloat(volSlider.value) + 0.1);
         volSlider.value = newVolUp;
         updateSliderGradient(newVolUp);
-        updateActiveStemVolumes();
+        updateVolumes();
         break;
       case 'ArrowDown':
         e.preventDefault();
         const newVolDown = Math.max(0, parseFloat(volSlider.value) - 0.1);
         volSlider.value = newVolDown;
         updateSliderGradient(newVolDown);
-        updateActiveStemVolumes();
+        updateVolumes();
         break;
     }}
   }});
@@ -758,6 +730,7 @@ html = f"""
   document.getElementById('waveform').style.cursor = 'pointer';
   setLyricsActive('A');
   updateSliderGradient(1);
+  console.log('✅ FluXTape initialized - all audio elements ready');
 </script>
 """
 
