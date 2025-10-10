@@ -223,7 +223,7 @@ html = f"""
   .control-section {{
     background: rgba(255,255,255,0.03);
     border-radius: 16px;
-    padding: 25px 20px;
+    padding: 25px 20px 30px 20px;
     text-align: center;
   }}
 
@@ -932,4 +932,4 @@ html = f"""
 </script>
 """
 
-st.components.v1.html(html, height=1300)
+st.components.v1.html(html, height=1600)
