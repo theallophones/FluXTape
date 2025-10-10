@@ -786,20 +786,20 @@ html = f"""
     const time = progress * grooveWS.getDuration();
     console.log('Seeking to:', time);
     
-    // Set all stems to the exact same position
+    // Set all stems to the exact same position (Master track is set by the click)
     Object.values(stems).forEach(ws => {{
       ws.setTime(Math.min(time, ws.getDuration() - 0.01));
     }});
     
-    // If playing, restart all at the new position immediately (no setTimeout!)
+    // If playing, we need to restart all at the new position
     if (isPlaying) {{
       console.log('Was playing, restarting at new position');
       
-      // Step 1: Pause everything first
+      // Pause everything first
       grooveWS.pause();
       Object.values(stems).forEach(ws => ws.pause());
       
-      // Step 2: Restart immediately at current time for precise Web Audio API sync
+      // Relaunch immediately (synchronously) to leverage Web Audio API's precise start time
       const currentTime = grooveWS.getCurrentTime();
       grooveWS.play(currentTime);
       Object.values(stems).forEach(ws => ws.play(currentTime));
