@@ -128,17 +128,26 @@ html = f"""
 
   <div class="control-section">
     <div class="control-header">SOLO</div>
-    <div class="toggle-container">
-      <button class="toggle-btn active" data-solo="A">Take A</button>
-      <button class="toggle-btn" data-solo="B">Take B</button>
+    <div class="knob-wrap-small">
+      <div id="soloKnob" class="knob-small" title="Click to switch solo">
+        <div id="soloPointer" class="pointer-small"></div>
+        <div class="center-dot-small"></div>
+      </div>
+      <div class="label-small labelLeft-small active" data-solo="A">A</div>
+      <div class="label-small labelRight-small" data-solo="B">B</div>
     </div>
     <div id="soloDisplay" class="version-badge">Solo A</div>
   </div>
 
   <div class="control-section">
     <div class="control-header">SPATIALIZE</div>
-    <div style="display:flex; justify-content:center;">
-      <button id="spatializeBtn" class="spatialize-btn">OFF</button>
+    <div class="knob-wrap-small">
+      <div id="spatializeKnob" class="knob-small" title="Click to toggle spatialize">
+        <div id="spatializePointer" class="pointer-small"></div>
+        <div class="center-dot-small"></div>
+      </div>
+      <div class="label-small labelLeft-small active" data-spatialize="narrow">OFF</div>
+      <div class="label-small labelRight-small" data-spatialize="wide">ON</div>
     </div>
     <div id="spatializeDisplay" class="version-badge">Narrow</div>
   </div>
