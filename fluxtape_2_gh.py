@@ -503,7 +503,27 @@ html = f"""
     if (readyCount === 8) {{
       allReady = true;
       console.log('✅ All stems loaded!');
-      updateActiveStemVolumes();
+      
+      // CRITICAL: Set initial volumes immediately
+      const vol = parseFloat(volSlider.value);
+      const rate = parseFloat(speedSelect.value);
+      
+      grooveWS.setVolume(vol);
+      grooveWS.setPlaybackRate(rate);
+      
+      // Set active stems to full volume, inactive to 0
+      stems.lyricsA.setVolume(vol);
+      stems.lyricsB.setVolume(0);
+      stems.lyricsC.setVolume(0);
+      stems.soloA.setVolume(vol);
+      stems.soloB.setVolume(0);
+      stems.harmony_narrow.setVolume(vol);
+      stems.harmony_wide.setVolume(0);
+      
+      // Set playback rate for all
+      Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
+      
+      console.log('✅ Initial volumes set - ready to play!');
     }}
   }}
 
