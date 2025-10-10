@@ -90,6 +90,10 @@ html = f"""
       <div class="label-small labelC-small" data-lyrics="C">C</div>
     </div>
     <div id="lyricsDisplay" class="version-badge">Lyrics A</div>
+    <div class="volume-knob-container">
+      <input type="range" id="lyricsVolume" class="volume-knob" min="0" max="100" value="100">
+      <div class="volume-label">Volume: <span id="lyricsVolumeDisplay">100%</span></div>
+    </div>
   </div>
 
   <div class="control-section">
@@ -103,6 +107,10 @@ html = f"""
       <div class="label-small labelRight-small" data-solo="B">B</div>
     </div>
     <div id="soloDisplay" class="version-badge">Take A</div>
+    <div class="volume-knob-container">
+      <input type="range" id="soloVolume" class="volume-knob" min="0" max="100" value="100">
+      <div class="volume-label">Volume: <span id="soloVolumeDisplay">100%</span></div>
+    </div>
   </div>
 
   <div class="control-section">
@@ -116,6 +124,10 @@ html = f"""
       <div class="label-small labelRight-small" data-spatialize="wide">W</div>
     </div>
     <div id="spatializeDisplay" class="version-badge">Narrow</div>
+    <div class="volume-knob-container">
+      <input type="range" id="spatializeVolume" class="volume-knob" min="0" max="100" value="100">
+      <div class="volume-label">Volume: <span id="spatializeVolumeDisplay">100%</span></div>
+    </div>
   </div>
 
   <div class="control-section">
@@ -129,6 +141,10 @@ html = f"""
       <div class="label-small labelRight-small" data-backvocals="on">ON</div>
     </div>
     <div id="backVocalsDisplay" class="version-badge">Off</div>
+    <div class="volume-knob-container">
+      <input type="range" id="backVocalsVolume" class="volume-knob" min="0" max="100" value="100">
+      <div class="volume-label">Volume: <span id="backVocalsVolumeDisplay">100%</span></div>
+    </div>
   </div>
 </div>
 
