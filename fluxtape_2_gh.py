@@ -29,6 +29,9 @@ audio_files = {
     "soloB": "soloB.mp3",
     "harmony_narrow": "harmony_narrow.mp3",
     "harmony_wide": "harmony_wide.mp3",
+    "adlibA": "adlibA.mp3",
+    "adlibB": "adlibB.mp3",
+    "adlibC": "adlibC.mp3",
 }
 
 def file_to_data_url(path, mime="audio/mpeg"):
@@ -55,7 +58,7 @@ for k, v in audio_files.items():
     if data_url:
         audio_map[k] = data_url
 
-if len(audio_map) < 8:
+if len(audio_map) < 11:
     st.error("❌ Not all audio files could be loaded.")
     st.stop()
 
@@ -150,6 +153,19 @@ html = f"""
       <div class="label-small labelRight-small" data-spatialize="wide">W</div>
     </div>
     <div id="spatializeDisplay" class="version-badge">Narrow</div>
+  </div>
+
+  <div class="control-section">
+    <div class="control-header">BACK VOCALS</div>
+    <div class="knob-wrap-small">
+      <div id="backVocalsKnob" class="knob-small" title="Click to toggle back vocals">
+        <div id="backVocalsPointer" class="pointer-small"></div>
+        <div class="center-dot-small"></div>
+      </div>
+      <div class="label-small labelLeft-small active" data-backvocals="off">OFF</div>
+      <div class="label-small labelRight-small" data-backvocals="on">ON</div>
+    </div>
+    <div id="backVocalsDisplay" class="version-badge">Off</div>
   </div>
 </div>
 
@@ -521,13 +537,17 @@ html = f"""
     soloA: createHiddenWS(),
     soloB: createHiddenWS(),
     harmony_narrow: createHiddenWS(),
-    harmony_wide: createHiddenWS()
+    harmony_wide: createHiddenWS(),
+    adlibA: createHiddenWS(),
+    adlibB: createHiddenWS(),
+    adlibC: createHiddenWS()
   }};
 
   // State
   let currentLyrics = 'A';
   let currentSolo = 'A';
   let spatializeOn = false;
+  let backVocalsOn = false;
   let isPlaying = false;
   let allReady = false;
   let readyCount = 0;
@@ -540,6 +560,8 @@ html = f"""
   const soloLabels = Array.from(document.querySelectorAll('[data-solo]'));
   const spatializePointer = document.getElementById('spatializePointer');
   const spatializeLabels = Array.from(document.querySelectorAll('[data-spatialize]'));
+  const backVocalsPointer = document.getElementById('backVocalsPointer');
+  const backVocalsLabels = Array.from(document.querySelectorAll('[data-backvocals]'));
   const timeDisplay = document.getElementById('time-display');
   const volSlider = document.getElementById('volumeSlider');
   const speedSelect = document.getElementById('speedSelect');
@@ -547,6 +569,7 @@ html = f"""
   const lyricsDisplay = document.getElementById('lyricsDisplay');
   const soloDisplay = document.getElementById('soloDisplay');
   const spatializeDisplay = document.getElementById('spatializeDisplay');
+  const backVocalsDisplay = document.getElementById('backVocalsDisplay');
 
   function formatTime(sec) {{
     const m = Math.floor(sec / 60);
@@ -562,8 +585,8 @@ html = f"""
 
   function checkReady() {{
     readyCount++;
-    console.log('Ready:', readyCount + '/8');
-    if (readyCount === 8) {{
+    console.log('Ready:', readyCount + '/11');
+    if (readyCount === 11) {{
       allReady = true;
       console.log('✅ All stems ready!');
       
@@ -571,17 +594,38 @@ html = f"""
       const vol = parseFloat(volSlider.value);
       console.log('Setting initial volumes to:', vol);
       
-      // We only control the WaveSurfer volume, which controls the gain node connected to masterGain
       grooveWS.setVolume(vol);
       console.log('Groove volume set to:', vol);
       
       stems.lyricsA.setVolume(vol);
+      console.log('LyricsA volume set to:', vol);
+      
       stems.lyricsB.setVolume(0);
+      console.log('LyricsB volume set to: 0');
+      
       stems.lyricsC.setVolume(0);
+      console.log('LyricsC volume set to: 0');
+      
       stems.soloA.setVolume(vol);
+      console.log('SoloA volume set to:', vol);
+      
       stems.soloB.setVolume(0);
+      console.log('SoloB volume set to: 0');
+      
       stems.harmony_narrow.setVolume(vol);
+      console.log('Harmony_narrow volume set to:', vol);
+      
       stems.harmony_wide.setVolume(0);
+      console.log('Harmony_wide volume set to: 0');
+      
+      stems.adlibA.setVolume(0);
+      console.log('AdlibA volume set to: 0 (back vocals off)');
+      
+      stems.adlibB.setVolume(0);
+      console.log('AdlibB volume set to: 0 (back vocals off)');
+      
+      stems.adlibC.setVolume(0);
+      console.log('AdlibC volume set to: 0 (back vocals off)');
       
       console.log('✅ Ready to play with sound!');
     }}
@@ -589,7 +633,7 @@ html = f"""
 
   function updateVolumes() {{
     const vol = parseFloat(volSlider.value);
-    console.log('Updating volumes to:', vol, 'Current lyrics:', currentLyrics);
+    console.log('Updating volumes to:', vol, 'Current lyrics:', currentLyrics, 'Back vocals:', backVocalsOn);
     
     grooveWS.setVolume(vol);
     
@@ -597,11 +641,24 @@ html = f"""
     stems.lyricsB.setVolume(currentLyrics === 'B' ? vol : 0);
     stems.lyricsC.setVolume(currentLyrics === 'C' ? vol : 0);
     
+    console.log('LyricsA vol:', currentLyrics === 'A' ? vol : 0);
+    console.log('LyricsB vol:', currentLyrics === 'B' ? vol : 0);
+    console.log('LyricsC vol:', currentLyrics === 'C' ? vol : 0);
+    
     stems.soloA.setVolume(currentSolo === 'A' ? vol : 0);
     stems.soloB.setVolume(currentSolo === 'B' ? vol : 0);
     
     stems.harmony_narrow.setVolume(!spatializeOn ? vol : 0);
     stems.harmony_wide.setVolume(spatializeOn ? vol : 0);
+    
+    // Back vocals logic: only audible if backVocalsOn is true AND matches current lyrics
+    stems.adlibA.setVolume(backVocalsOn && currentLyrics === 'A' ? vol : 0);
+    stems.adlibB.setVolume(backVocalsOn && currentLyrics === 'B' ? vol : 0);
+    stems.adlibC.setVolume(backVocalsOn && currentLyrics === 'C' ? vol : 0);
+    
+    console.log('AdlibA vol:', backVocalsOn && currentLyrics === 'A' ? vol : 0);
+    console.log('AdlibB vol:', backVocalsOn && currentLyrics === 'B' ? vol : 0);
+    console.log('AdlibC vol:', backVocalsOn && currentLyrics === 'C' ? vol : 0);
   }}
 
   function playAll() {{
@@ -617,7 +674,7 @@ html = f"""
     
     isPlaying = true;
     
-    // CRITICAL: Capture current time and start all tracks at exact same position
+    // CRITICAL FIX: Capture current time and start all tracks at exact same position
     const currentTime = grooveWS.getCurrentTime();
     console.log('Starting all tracks at time:', currentTime);
     
@@ -775,6 +832,36 @@ html = f"""
     spatializeDisplay.textContent = spatializeOn ? 'Wide' : 'Narrow';
   }}
 
+  // Back Vocals
+  document.getElementById('backVocalsKnob').addEventListener('click', () => {{
+    toggleBackVocals();
+  }});
+
+  backVocalsLabels.forEach(el => {{
+    el.addEventListener('click', (e) => {{
+      e.stopPropagation();
+      const isOn = el.getAttribute('data-backvocals') === 'on';
+      if (isOn !== backVocalsOn) {{
+        toggleBackVocals();
+      }}
+    }});
+  }});
+
+  function toggleBackVocals() {{
+    backVocalsOn = !backVocalsOn;
+    updateVolumes();
+    
+    backVocalsLabels.forEach(el => {{
+      const isOn = el.getAttribute('data-backvocals') === 'on';
+      el.classList.toggle('active', isOn === backVocalsOn);
+    }});
+    
+    // 0° = 12 o'clock (noon), so: OFF=270° (9 o'clock left), ON=90° (3 o'clock right)
+    const angle = backVocalsOn ? 90 : 270;
+    backVocalsPointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
+    backVocalsDisplay.textContent = backVocalsOn ? 'On' : 'Off';
+  }}
+
   // Volume
   function updateSliderGradient(value) {{
     const percent = value * 100;
@@ -793,30 +880,51 @@ html = f"""
     Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
   }});
 
-  // Seek - sync all stems when waveform is clicked
-  // CRITICAL FIX: Removed asynchronous logic to ensure high-precision Web Audio clock sync
-  grooveWS.on('seek', (progress) => {{
-    const time = progress * grooveWS.getDuration();
-    console.log('Seeking to:', time);
-    
-    // Set all stems to the exact same position (Master track is set by the click)
-    Object.values(stems).forEach(ws => {{
-      // Setting time slightly before the end to avoid Wavesurfer errors on exact duration
-      ws.setTime(Math.min(time, ws.getDuration() - 0.01));
-    }});
-    
-    // If playing, we need to restart all at the new position synchronously
-    if (isPlaying) {{
-      console.log('Was playing, restarting at new position');
+  let isSeeking = false;
+  let wasPlayingBeforeSeek = false;
+
+  // Detect when seeking starts (user clicks/drags on waveform)
+  grooveWS.on('interaction', () => {{
+    if (isPlaying && !isSeeking) {{
+      console.log('Seeking started - pausing playback');
+      isSeeking = true;
+      wasPlayingBeforeSeek = true;
       
-      // Pause everything first
+      // Pause everything immediately
       grooveWS.pause();
       Object.values(stems).forEach(ws => ws.pause());
-      
-      // Relaunch immediately (synchronously) to leverage Web Audio API's precise start time
-      const currentTime = grooveWS.getCurrentTime();
-      grooveWS.play(currentTime);
-      Object.values(stems).forEach(ws => ws.play(currentTime));
+      isPlaying = false;
+    }}
+  }});
+
+  // Seek - sync all stems when waveform position changes
+  grooveWS.on('seek', (progress) => {{
+    const targetTime = progress * grooveWS.getDuration();
+    console.log('Seek to:', targetTime);
+    
+    // Sync all other stems to the new position
+    Object.values(stems).forEach(ws => {{
+      ws.setTime(Math.min(targetTime, ws.getDuration() - 0.01));
+    }});
+    
+    // After a brief moment, restart playback if it was playing before
+    if (wasPlayingBeforeSeek) {{
+      setTimeout(() => {{
+        if (isSeeking) {{
+          console.log('Seek ended - restarting playback');
+          isSeeking = false;
+          wasPlayingBeforeSeek = false;
+          
+          // Get the exact position where groove ended up
+          const exactTime = grooveWS.getCurrentTime();
+          console.log('Restarting all at exact time:', exactTime);
+          
+          // Start all tracks at the EXACT same time
+          isPlaying = true;
+          grooveWS.play(exactTime);
+          Object.values(stems).forEach(ws => ws.play(exactTime));
+        }}
+      }}, 100);
     }}
   }});
 
@@ -851,14 +959,12 @@ html = f"""
       case 'ArrowLeft':
         e.preventDefault();
         console.log('Arrow Left: seeking backward');
-        // Use skip for both the master and the stems
         grooveWS.skip(-5);
         Object.values(stems).forEach(ws => ws.skip(-5));
         break;
       case 'ArrowRight':
         e.preventDefault();
         console.log('Arrow Right: seeking forward');
-        // Use skip for both the master and the stems
         grooveWS.skip(5);
         Object.values(stems).forEach(ws => ws.skip(5));
         break;
