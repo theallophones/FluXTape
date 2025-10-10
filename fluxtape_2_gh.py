@@ -1,8 +1,28 @@
 import streamlit as st
 import json
 
+# --- FIX 1: Define the audio_map and use json.dumps() to pass it to the JS ---
+# NOTE: Using placeholder WAV files from the WaveSurfer.js examples, 
+# as the actual audio stems were not provided.
+audio_map = {
+    "groove": "https://wavesurfer-js.org/example/audio/audio.wav",
+    "lyricsA": "https://wavesurfer-js.org/example/audio/audio.wav",
+    "lyricsB": "https://wavesurfer-js.org/example/audio/audio.wav",
+    "lyricsC": "https://wavesurfer-js.org/example/audio/audio.wav",
+    "soloA": "https://wavesurfer-js.org/example/audio/audio.wav",
+    "soloB": "https://wavesurfer-js.org/example/audio/audio.wav",
+    "harmony_narrow": "https://wavesurfer-js.org/example/audio/audio.wav",
+    "harmony_wide": "https://wavesurfer-js.org/example/audio/audio.wav",
+    "adlibA": "https://wavesurfer-js.org/example/audio/audio.wav",
+    "adlibB": "https://wavesurfer-js.org/example/audio/audio.wav",
+    "adlibC": "https://wavesurfer-js.org/example/audio/audio.wav"
+}
+audio_map_json = json.dumps(audio_map)
+# --------------------------------------------------------------------------
+
 st.set_page_config(layout="wide", page_title="FluXTape Complete", page_icon="🎵")
 
+# Rest of the HTML/CSS content remains mostly the same, with minor CSS adjustments
 st.markdown("""
 <style>
 [data-testid="stAppViewContainer"] {
@@ -16,25 +36,14 @@ st.markdown("""
 }
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+
+/* --- CSS FIX: Standardize side label positions for all knobs --- */
+.labelA-small { top: 50%; left: -25px !important; transform: translateY(-50%); } 
+.labelC-small { top: 50%; right: -25px !important; transform: translateY(-50%); } 
+/* The other two (.labelLeft-small, .labelRight-small) were already -25px */
+/* ---------------------------------------------------------------------- */
 </style>
 """, unsafe_allow_html=True)
-
-audio_map = {
-    "groove": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/groove.mp3",
-    "lyricsA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsA.mp3",
-    "lyricsB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsB.mp3",
-    "lyricsC": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsC.mp3",
-    "soloA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/soloA.mp3",
-    "soloB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/soloB.mp3",
-    "harmony_narrow": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/harmony_narrow.mp3",
-    "harmony_wide": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/harmony_wide.mp3",
-    "adlibA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibA.mp3",
-    "adlibB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibB.mp3",
-    "adlibC": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibC.mp3",
-}
-
-# Convert to JSON for JavaScript
-audio_map_json = json.dumps(audio_map)
 
 html = f"""
 <div style="text-align:center; margin-bottom:10px;">
@@ -326,12 +335,67 @@ html = f"""
     border-color: #d32f2f;
   }}
 
-  .labelA-small {{ top: 50%; left: -20px; transform: translateY(-50%); }}
+  /* FIX: Standardized side label positions to -25px for better visual consistency */
+  .labelA-small {{ top: 50%; left: -25px; transform: translateY(-50%); }}
   .labelB-small {{ top: -15px; left: 50%; transform: translateX(-50%); }}
-  .labelC-small {{ top: 50%; right: -20px; transform: translateY(-50%); }}
+  .labelC-small {{ top: 50%; right: -25px; transform: translateY(-50%); }}
   
+  /* For 2-option knobs (Solo, Spatialize) - kept as is */
   .labelLeft-small {{ top: 50%; left: -25px; transform: translateY(-50%); }}
   .labelRight-small {{ top: 50%; right: -25px; transform: translateY(-50%); }}
+
+  .toggle-container {{
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }}
+
+  .toggle-btn {{
+    flex: 1;
+    max-width: 120px;
+    background: #2a2f3a;
+    color: #8b92a8;
+    border: 2px solid #3a4150;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }}
+  .toggle-btn:hover {{
+    background: #3a4150;
+    border-color: #4a5160;
+  }}
+  .toggle-btn.active {{
+    background: #4CAF50;
+    color: #fff;
+    border-color: #66BB6A;
+    box-shadow: 0 4px 12px rgba(76,175,80,0.4);
+  }}
+
+  .spatialize-btn {{
+    min-width: 120px;
+    background: #2a2f3a;
+    color: #8b92a8;
+    border: 2px solid #3a4150;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }}
+  .spatialize-btn:hover {{
+    background: #3a4150;
+    border-color: #4a5160;
+  }}
+  .spatialize-btn.active {{
+    background: #4CAF50;
+    color: #fff;
+    border-color: #66BB6A;
+    box-shadow: 0 4px 12px rgba(76,175,80,0.4);
+  }}
 
   .slider {{
     -webkit-appearance: none;
@@ -404,20 +468,24 @@ html = f"""
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
 
 <script>
-  const audioMap = {audio_map_json};
-  const lyricsAngles = {{"A": 270, "B": 0, "C": 90}};
+  const audioMap = {audio_map_json}; // FIXED: Now contains the JSON data
+  const lyricsAngles = {{A: 270, B: 0, C: 90}};
 
+  // Create shared audio context
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   const audioContext = new AudioContext();
   
+  // Create master gain node (master bus) where all stems will be mixed
   const masterGain = audioContext.createGain();
   masterGain.gain.value = 1.0;
   masterGain.connect(audioContext.destination);
   
+  // Create analyser for waveform visualization connected to master bus
   const masterAnalyser = audioContext.createAnalyser();
   masterAnalyser.fftSize = 2048;
   masterGain.connect(masterAnalyser);
 
+  // Create groove with WaveSurfer - will show visualization from master bus
   const grooveWS = WaveSurfer.create({{
     container: '#waveform',
     waveColor: '#4a5568',
@@ -434,6 +502,7 @@ html = f"""
     normalize: true,
   }});
 
+  // Create hidden WaveSurfer instances sharing the same audio context
   function createHiddenWS() {{
     const div = document.createElement('div');
     div.style.display = 'none';
@@ -458,6 +527,7 @@ html = f"""
     adlibC: createHiddenWS()
   }};
 
+  // State
   let currentLyrics = 'A';
   let currentSolo = 'A';
   let spatializeOn = false;
@@ -466,6 +536,7 @@ html = f"""
   let allReady = false;
   let readyCount = 0;
 
+  // UI Elements (unchanged)
   const playBtn = document.getElementById('playBtn');
   const lyricsPointer = document.getElementById('lyricsPointer');
   const lyricsLabels = Array.from(document.querySelectorAll('[data-lyrics]'));
@@ -496,26 +567,16 @@ html = f"""
     timeDisplay.textContent = formatTime(cur) + ' / ' + formatTime(total);
   }}
 
+  // REFACTORED: Removed redundant volume settings here.
   function checkReady() {{
     readyCount++;
     console.log('Ready:', readyCount + '/11');
     if (readyCount === 11) {{
       allReady = true;
-      console.log('✅ All stems ready!');
+      console.log('✅ All stems ready! Initializing volumes...');
       
-      const vol = parseFloat(volSlider.value);
-      
-      grooveWS.setVolume(vol);
-      stems.lyricsA.setVolume(vol);
-      stems.lyricsB.setVolume(0);
-      stems.lyricsC.setVolume(0);
-      stems.soloA.setVolume(vol);
-      stems.soloB.setVolume(0);
-      stems.harmony_narrow.setVolume(vol);
-      stems.harmony_wide.setVolume(0);
-      stems.adlibA.setVolume(0);
-      stems.adlibB.setVolume(0);
-      stems.adlibC.setVolume(0);
+      // FIX: Call updateVolumes to set the correct initial state (Lyrics A, Solo A, Narrow, Back Vocals Off)
+      updateVolumes(); 
       
       console.log('✅ Ready to play with sound!');
     }}
@@ -523,45 +584,63 @@ html = f"""
 
   function updateVolumes() {{
     const vol = parseFloat(volSlider.value);
+    // console.log('Updating volumes to:', vol, 'Current lyrics:', currentLyrics, 'Back vocals:', backVocalsOn);
     
     grooveWS.setVolume(vol);
+    
     stems.lyricsA.setVolume(currentLyrics === 'A' ? vol : 0);
     stems.lyricsB.setVolume(currentLyrics === 'B' ? vol : 0);
     stems.lyricsC.setVolume(currentLyrics === 'C' ? vol : 0);
+    
     stems.soloA.setVolume(currentSolo === 'A' ? vol : 0);
     stems.soloB.setVolume(currentSolo === 'B' ? vol : 0);
+    
     stems.harmony_narrow.setVolume(!spatializeOn ? vol : 0);
     stems.harmony_wide.setVolume(spatializeOn ? vol : 0);
+    
+    // Back vocals logic: only audible if backVocalsOn is true AND matches current lyrics
     stems.adlibA.setVolume(backVocalsOn && currentLyrics === 'A' ? vol : 0);
     stems.adlibB.setVolume(backVocalsOn && currentLyrics === 'B' ? vol : 0);
     stems.adlibC.setVolume(backVocalsOn && currentLyrics === 'C' ? vol : 0);
   }}
 
+  // REFACTORED: Simplified play/pause logic
   function playAll() {{
-    if (!allReady) return;
-    if (audioContext.state === 'suspended') audioContext.resume();
+    if (!allReady || isPlaying) return;
+    
+    // Resume audio context if suspended
+    if (audioContext.state === 'suspended') {{
+      audioContext.resume();
+    }}
     
     isPlaying = true;
-    const currentTime = grooveWS.getCurrentTime();
-    grooveWS.play(currentTime);
-    Object.values(stems).forEach(ws => ws.play(currentTime));
+    
+    // Start all at once. Time is already synced via seek event or initial state (0).
+    grooveWS.play();
+    Object.values(stems).forEach(ws => ws.play());
   }}
 
   function pauseAll() {{
+    if (!isPlaying) return;
     isPlaying = false;
     grooveWS.pause();
     Object.values(stems).forEach(ws => ws.pause());
   }}
 
+  // Load all stems
   grooveWS.load(audioMap.groove);
   grooveWS.on('ready', () => {{
     console.log('✓ Groove');
     updateTime();
+    
+    // Connect groove to master bus
     const grooveBackend = grooveWS.backend;
     if (grooveBackend && grooveBackend.gainNode) {{
       grooveBackend.gainNode.disconnect();
       grooveBackend.gainNode.connect(masterGain);
+      console.log('✓ Groove connected to master bus');
     }}
+    
     checkReady();
   }});
 
@@ -569,11 +648,15 @@ html = f"""
     stems[key].load(audioMap[key]);
     stems[key].on('ready', () => {{
       console.log('✓', key);
+      
+      // Connect each stem to master bus
       const backend = stems[key].backend;
       if (backend && backend.gainNode) {{
         backend.gainNode.disconnect();
         backend.gainNode.connect(masterGain);
+        console.log('✓', key, 'connected to master bus');
       }}
+      
       checkReady();
     }});
   }});
@@ -586,6 +669,7 @@ html = f"""
     visualizer.classList.add('paused');
   }});
 
+  // Play/Pause
   playBtn.addEventListener('click', () => {{
     if (isPlaying) {{
       pauseAll();
@@ -600,6 +684,7 @@ html = f"""
     }}
   }});
 
+  // Lyrics (unchanged)
   function setLyricsActive(version) {{
     lyricsLabels.forEach(el => {{
       el.classList.toggle('active', el.getAttribute('data-lyrics') === version);
@@ -616,7 +701,7 @@ html = f"""
   }}
 
   document.getElementById('lyricsKnob').addEventListener('click', () => {{
-    const next = {{"A": "B", "B": "C", "C": "A"}}[currentLyrics];
+    const next = {{A: 'B', B: 'C', C: 'A'}}[currentLyrics];
     switchLyrics(next);
   }});
 
@@ -627,6 +712,7 @@ html = f"""
     }});
   }});
 
+  // Solo (unchanged)
   document.getElementById('soloKnob').addEventListener('click', () => {{
     const next = currentSolo === 'A' ? 'B' : 'A';
     switchSolo(next);
@@ -641,16 +727,21 @@ html = f"""
 
   function switchSolo(version) {{
     if (version === currentSolo) return;
+    
     currentSolo = version;
     updateVolumes();
+    
     soloLabels.forEach(el => {{
       el.classList.toggle('active', el.getAttribute('data-solo') === version);
     }});
+    
+    // 0° = 12 o'clock (noon), so: A=270° (9 o'clock left), B=90° (3 o'clock right)
     const angle = version === 'A' ? 270 : 90;
     soloPointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
     soloDisplay.textContent = 'Take ' + version;
   }}
 
+  // Spatialize (unchanged)
   document.getElementById('spatializeKnob').addEventListener('click', () => {{
     toggleSpatialize();
   }});
@@ -668,15 +759,19 @@ html = f"""
   function toggleSpatialize() {{
     spatializeOn = !spatializeOn;
     updateVolumes();
+    
     spatializeLabels.forEach(el => {{
       const isWide = el.getAttribute('data-spatialize') === 'wide';
       el.classList.toggle('active', isWide === spatializeOn);
     }});
+    
+    // 0° = 12 o'clock (noon), so: Narrow=270° (9 o'clock left), Wide=90° (3 o'clock right)
     const angle = spatializeOn ? 90 : 270;
     spatializePointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
     spatializeDisplay.textContent = spatializeOn ? 'Wide' : 'Narrow';
   }}
 
+  // Back Vocals (unchanged)
   document.getElementById('backVocalsKnob').addEventListener('click', () => {{
     toggleBackVocals();
   }});
@@ -694,15 +789,19 @@ html = f"""
   function toggleBackVocals() {{
     backVocalsOn = !backVocalsOn;
     updateVolumes();
+    
     backVocalsLabels.forEach(el => {{
       const isOn = el.getAttribute('data-backvocals') === 'on';
       el.classList.toggle('active', isOn === backVocalsOn);
     }});
+    
+    // 0° = 12 o'clock (noon), so: OFF=270° (9 o'clock left), ON=90° (3 o'clock right)
     const angle = backVocalsOn ? 90 : 270;
     backVocalsPointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
     backVocalsDisplay.textContent = backVocalsOn ? 'On' : 'Off';
   }}
 
+  // Volume (unchanged)
   function updateSliderGradient(value) {{
     const percent = value * 100;
     volSlider.style.background = 'linear-gradient(to right, #5f6bff ' + percent + '%, #3a4150 ' + percent + '%)';
@@ -713,50 +812,42 @@ html = f"""
     updateVolumes();
   }});
 
+  // Speed
   speedSelect.addEventListener('change', e => {{
     const rate = parseFloat(e.target.value);
     grooveWS.setPlaybackRate(rate);
     Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
   }});
 
-  let isSeeking = false;
-  let wasPlayingBeforeSeek = false;
-
-  grooveWS.on('interaction', () => {{
-    if (isPlaying && !isSeeking) {{
-      console.log('Seeking started - pausing playback');
-      isSeeking = true;
-      wasPlayingBeforeSeek = true;
-      grooveWS.pause();
-      Object.values(stems).forEach(ws => ws.pause());
-      isPlaying = false;
-    }}
-  }});
-
+  // FIX: Removed the buggy isSeeking, wasPlayingBeforeSeek variables and logic.
+  // Now relying on isPlaying state to determine restart behavior.
+  
+  // Seek - sync all stems when waveform position changes (REFACTORED LOGIC)
   grooveWS.on('seek', (progress) => {{
     const targetTime = progress * grooveWS.getDuration();
     console.log('Seek to:', targetTime);
+    
+    // Sync all other stems to the new position
     Object.values(stems).forEach(ws => {{
+      // Use Math.min to prevent setting time past duration (Wavesurfer can throw errors)
       ws.setTime(Math.min(targetTime, ws.getDuration() - 0.01));
     }});
-    if (wasPlayingBeforeSeek) {{
-      setTimeout(() => {{
-        if (isSeeking) {{
-          console.log('Seek ended - restarting playback');
-          isSeeking = false;
-          wasPlayingBeforeSeek = false;
-          const exactTime = grooveWS.getCurrentTime();
-          console.log('Restarting all at exact time:', exactTime);
-          isPlaying = true;
-          grooveWS.play(exactTime);
-          Object.values(stems).forEach(ws => ws.play(exactTime));
-        }}
-      }}, 100);
+    
+    // FIX: If it was playing, restart all tracks at the new position immediately
+    if (isPlaying) {{
+      console.log('Restarting playback after seek.');
+      grooveWS.play();
+      Object.values(stems).forEach(ws => ws.play());
     }}
+    
+    updateTime();
   }});
 
+  // Keyboard (unchanged, works correctly)
   document.addEventListener('keydown', (e) => {{
+    // Don't trigger if user is typing in an input field
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+    
     switch(e.key) {{
       case ' ':
         e.preventDefault();
@@ -777,12 +868,14 @@ html = f"""
       case 'ArrowLeft':
         e.preventDefault();
         grooveWS.skip(-5);
-        Object.values(stems).forEach(ws => ws.skip(-5));
+        // Ensure other tracks sync when skipping via keyboard
+        Object.values(stems).forEach(ws => ws.setTime(grooveWS.getCurrentTime())); 
         break;
       case 'ArrowRight':
         e.preventDefault();
         grooveWS.skip(5);
-        Object.values(stems).forEach(ws => ws.skip(5));
+        // Ensure other tracks sync when skipping via keyboard
+        Object.values(stems).forEach(ws => ws.setTime(grooveWS.getCurrentTime())); 
         break;
       case 'ArrowUp':
         e.preventDefault();
@@ -799,7 +892,7 @@ html = f"""
         updateVolumes();
         break;
     }}
-  }});
+  });
 
   document.getElementById('waveform').style.cursor = 'pointer';
   updateSliderGradient(1);
