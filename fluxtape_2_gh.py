@@ -159,14 +159,12 @@ html = f"""
     <div class="control-header">BACK VOCALS</div>
     <div class="knob-wrap-small">
       <div id="backVocalsKnob" class="knob-small" title="Click to toggle back vocals">
-        <div id="backVocalsPointer" class="pointer-small"></div>
-        <div class="center-dot-small"></div>
+        <div id="backVocalsPointer" class="pointer-small" style="transform: translate(-50%, 0) rotate(270deg);"></div>         <div class="center-dot-small"></div>
       </div>
       <div class="label-small labelLeft-small active" data-backvocals="off">OFF</div>
       <div class="label-small labelRight-small" data-backvocals="on">ON</div>
     </div>
-    <div id="backVocalsDisplay" class="version-badge">Off</div>
-  </div>
+    <div id="backVocalsDisplay" class="version-badge">OFF</div>   </div>
 </div>
 
 <div style="text-align:center; margin-top:30px; padding:20px; background:rgba(255,255,255,0.03); border-radius:12px; max-width:600px; margin-left:auto; margin-right:auto;">
@@ -590,43 +588,9 @@ html = f"""
       allReady = true;
       console.log('✅ All stems ready!');
       
-      // Set initial volumes explicitly for ALL stems
+      // Set initial volumes (initial state: LyricsA, SoloA, Narrow, Back Vocals OFF)
       const vol = parseFloat(volSlider.value);
-      console.log('Setting initial volumes to:', vol);
-      
-      grooveWS.setVolume(vol);
-      console.log('Groove volume set to:', vol);
-      
-      stems.lyricsA.setVolume(vol);
-      console.log('LyricsA volume set to:', vol);
-      
-      stems.lyricsB.setVolume(0);
-      console.log('LyricsB volume set to: 0');
-      
-      stems.lyricsC.setVolume(0);
-      console.log('LyricsC volume set to: 0');
-      
-      stems.soloA.setVolume(vol);
-      console.log('SoloA volume set to:', vol);
-      
-      stems.soloB.setVolume(0);
-      console.log('SoloB volume set to: 0');
-      
-      stems.harmony_narrow.setVolume(vol);
-      console.log('Harmony_narrow volume set to:', vol);
-      
-      stems.harmony_wide.setVolume(0);
-      console.log('Harmony_wide volume set to: 0');
-      
-      stems.adlibA.setVolume(0);
-      console.log('AdlibA volume set to: 0 (back vocals off)');
-      
-      stems.adlibB.setVolume(0);
-      console.log('AdlibB volume set to: 0 (back vocals off)');
-      
-      stems.adlibC.setVolume(0);
-      console.log('AdlibC volume set to: 0 (back vocals off)');
-      
+      updateVolumes(); // Call updateVolumes once to set all initial states correctly
       console.log('✅ Ready to play with sound!');
     }}
   }}
@@ -641,10 +605,6 @@ html = f"""
     stems.lyricsB.setVolume(currentLyrics === 'B' ? vol : 0);
     stems.lyricsC.setVolume(currentLyrics === 'C' ? vol : 0);
     
-    console.log('LyricsA vol:', currentLyrics === 'A' ? vol : 0);
-    console.log('LyricsB vol:', currentLyrics === 'B' ? vol : 0);
-    console.log('LyricsC vol:', currentLyrics === 'C' ? vol : 0);
-    
     stems.soloA.setVolume(currentSolo === 'A' ? vol : 0);
     stems.soloB.setVolume(currentSolo === 'B' ? vol : 0);
     
@@ -655,10 +615,6 @@ html = f"""
     stems.adlibA.setVolume(backVocalsOn && currentLyrics === 'A' ? vol : 0);
     stems.adlibB.setVolume(backVocalsOn && currentLyrics === 'B' ? vol : 0);
     stems.adlibC.setVolume(backVocalsOn && currentLyrics === 'C' ? vol : 0);
-    
-    console.log('AdlibA vol:', backVocalsOn && currentLyrics === 'A' ? vol : 0);
-    console.log('AdlibB vol:', backVocalsOn && currentLyrics === 'B' ? vol : 0);
-    console.log('AdlibC vol:', backVocalsOn && currentLyrics === 'C' ? vol : 0);
   }}
 
   function playAll() {{
@@ -859,7 +815,7 @@ html = f"""
     // 0° = 12 o'clock (noon), so: OFF=270° (9 o'clock left), ON=90° (3 o'clock right)
     const angle = backVocalsOn ? 90 : 270;
     backVocalsPointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
-    backVocalsDisplay.textContent = backVocalsOn ? 'On' : 'Off';
+    backVocalsDisplay.textContent = backVocalsOn ? 'ON' : 'OFF'; // ENHANCEMENT: Consistent capitalization
   }}
 
   // Volume
@@ -880,51 +836,28 @@ html = f"""
     Object.values(stems).forEach(ws => ws.setPlaybackRate(rate));
   }});
 
-  let isSeeking = false;
-  let wasPlayingBeforeSeek = false;
-
-  // Detect when seeking starts (user clicks/drags on waveform)
-  grooveWS.on('interaction', () => {{
-    if (isPlaying && !isSeeking) {{
-      console.log('Seeking started - pausing playback');
-      isSeeking = true;
-      wasPlayingBeforeSeek = true;
-      
-      // Pause everything immediately
-      grooveWS.pause();
-      Object.values(stems).forEach(ws => ws.pause());
-      isPlaying = false;
-    }}
-  }});
-
-  // Seek - sync all stems when waveform position changes
+  // ENHANCEMENT: Replaced the complex seek logic with a robust synchronous restart pattern
   grooveWS.on('seek', (progress) => {{
-    const targetTime = progress * grooveWS.getDuration();
-    console.log('Seek to:', targetTime);
+    const time = progress * grooveWS.getDuration();
+    console.log('Seeking to:', time);
     
-    // Sync all other stems to the new position
+    // 1. Set all stems to the exact same position
     Object.values(stems).forEach(ws => {{
-      ws.setTime(Math.min(targetTime, ws.getDuration() - 0.01));
+      ws.setTime(Math.min(time, ws.getDuration() - 0.01));
     }});
     
-    // After a brief moment, restart playback if it was playing before
-    if (wasPlayingBeforeSeek) {{
-      setTimeout(() => {{
-        if (isSeeking) {{
-          console.log('Seek ended - restarting playback');
-          isSeeking = false;
-          wasPlayingBeforeSeek = false;
-          
-          // Get the exact position where groove ended up
-          const exactTime = grooveWS.getCurrentTime();
-          console.log('Restarting all at exact time:', exactTime);
-          
-          // Start all tracks at the EXACT same time
-          isPlaying = true;
-          grooveWS.play(exactTime);
-          Object.values(stems).forEach(ws => ws.play(exactTime));
-        }}
-      }}, 100);
+    // 2. If playing, restart all at the new position synchronously for perfect sync
+    if (isPlaying) {{
+      console.log('Was playing, restarting at new position synchronously');
+      
+      // Pause everything first (crucial for synchronous restart)
+      grooveWS.pause();
+      Object.values(stems).forEach(ws => ws.pause());
+      
+      // Relaunch immediately
+      const currentTime = grooveWS.getCurrentTime();
+      grooveWS.play(currentTime);
+      Object.values(stems).forEach(ws => ws.play(currentTime));
     }}
   }});
 
