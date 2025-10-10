@@ -380,7 +380,7 @@ html = f"""
     color: #8b92a8;
     border: 2px solid #3a4150;
     border-radius: 10px;
-    padding: 5px 5px;
+    padding: -5px 5px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
