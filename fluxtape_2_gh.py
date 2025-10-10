@@ -216,7 +216,7 @@ html = f"""
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 30px;
     max-width: 900px;
-    margin: 40px auto;
+    margin: 40px auto 60px auto;
     padding: 0 20px;
   }}
 
@@ -812,20 +812,8 @@ html = f"""
     Object.values(stems).forEach(ws => {{
       ws.setTime(Math.min(targetTime, ws.getDuration() - 0.01));
     }});
-    if (wasPlayingBeforeSeek) {{
-      setTimeout(() => {{
-        if (isSeeking) {{
-          console.log('Seek ended - restarting playback');
-          isSeeking = false;
-          wasPlayingBeforeSeek = false;
-          const exactTime = grooveWS.getCurrentTime();
-          console.log('Restarting all at exact time:', exactTime);
-          isPlaying = true;
-          grooveWS.play(exactTime);
-          Object.values(stems).forEach(ws => ws.play(exactTime));
-        }}
-      }}, 100);
-    }}
+    isSeeking = false;
+    wasPlayingBeforeSeek = false;
   }});
 
   document.addEventListener('keydown', (e) => {{
@@ -932,4 +920,4 @@ html = f"""
 </script>
 """
 
-st.components.v1.html(html, height=1800)
+st.components.v1.html(html, height=1600)
