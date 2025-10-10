@@ -146,8 +146,8 @@ html = f"""
         <div id="spatializePointer" class="pointer-small"></div>
         <div class="center-dot-small"></div>
       </div>
-      <div class="label-small labelLeft-small active" data-spatialize="narrow">Narrow</div>
-      <div class="label-small labelRight-small" data-spatialize="wide">Wide</div>
+      <div class="label-small labelLeft-small active" data-spatialize="narrow">N</div>
+      <div class="label-small labelRight-small" data-spatialize="wide">W</div>
     </div>
     <div id="spatializeDisplay" class="version-badge">Narrow</div>
   </div>
