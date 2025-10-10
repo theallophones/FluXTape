@@ -20,17 +20,17 @@ footer {visibility: hidden;}
 """, unsafe_allow_html=True)
 
 audio_map = {
-    "groove": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/groove.mp3",
-    "lyricsA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsA.mp3",
-    "lyricsB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsB.mp3",
-    "lyricsC": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsC.mp3",
-    "soloA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/soloA.mp3",
-    "soloB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/soloB.mp3",
-    "harmony_narrow": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/harmony_narrow.mp3",
-    "harmony_wide": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/harmony_wide.mp3",
-    "adlibA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibA.mp3",
-    "adlibB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibB.mp3",
-    "adlibC": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibC.mp3",
+    "groove": "https://raw.githubusercontent.com/theallophones/audio/main/groove.mp3",
+    "lyricsA": "https://raw.githubusercontent.com/theallophones/audio/main/lyricsA.mp3",
+    "lyricsB": "https://raw.githubusercontent.com/theallophones/audio/main/lyricsB.mp3",
+    "lyricsC": "https://raw.githubusercontent.com/theallophones/audio/main/lyricsC.mp3",
+    "soloA": "https://raw.githubusercontent.com/theallophones/audio/main/soloA.mp3",
+    "soloB": "https://raw.githubusercontent.com/theallophones/audio/main/soloB.mp3",
+    "harmony_narrow": "https://raw.githubusercontent.com/theallophones/audio/main/harmony_narrow.mp3",
+    "harmony_wide": "https://raw.githubusercontent.com/theallophones/audio/main/harmony_wide.mp3",
+    "adlibA": "https://raw.githubusercontent.com/theallophones/audio/main/adlibA.mp3",
+    "adlibB": "https://raw.githubusercontent.com/theallophones/audio/main/adlibB.mp3",
+    "adlibC": "https://raw.githubusercontent.com/theallophones/audio/main/adlibC.mp3",
 }
 
 audio_map_json = json.dumps(audio_map)
@@ -418,7 +418,8 @@ html = f"""
     document.body.appendChild(div);
     return WaveSurfer.create({{
       container: div,
-      backend: 'MediaElement'
+      backend: 'WebAudio',
+      audioContext: audioContext
     }});
   }}
 
@@ -524,6 +525,10 @@ html = f"""
   function playAll() {{
     if (!allReady) return;
     
+    if (audioContext.state === 'suspended') {{
+      audioContext.resume();
+    }}
+    
     isPlaying = true;
     const currentTime = grooveWS.getCurrentTime();
     grooveWS.play(currentTime);
@@ -547,6 +552,11 @@ html = f"""
   grooveWS.on('ready', () => {{
     console.log('✓ Groove');
     updateTime();
+    const grooveBackend = grooveWS.backend;
+    if (grooveBackend && grooveBackend.gainNode) {{
+      grooveBackend.gainNode.disconnect();
+      grooveBackend.gainNode.connect(masterGain);
+    }}
     checkReady();
   }});
 
@@ -561,6 +571,11 @@ html = f"""
     
     stems[key].on('ready', () => {{
       console.log('✓', key);
+      const backend = stems[key].backend;
+      if (backend && backend.gainNode) {{
+        backend.gainNode.disconnect();
+        backend.gainNode.connect(masterGain);
+      }}
       checkReady();
     }});
   }});
