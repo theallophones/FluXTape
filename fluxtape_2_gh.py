@@ -341,8 +341,8 @@ html = f"""
   .labelC-small {{ top: 50%; right: -20px; transform: translateY(-50%); }}
   
   /* For 2-option knobs (Solo, Spatialize) - left and right only, matching Lyrics A and C positions */
-  .labelLeft-small {{ top: 50%; left: -45px; transform: translateY(-50%); }}
-  .labelRight-small {{ top: 50%; right: -45px; transform: translateY(-50%); }}
+  .labelLeft-small {{ top: 50%; left: -25px; transform: translateY(-50%); }}
+  .labelRight-small {{ top: 50%; right: -25px; transform: translateY(-50%); }}
 
   .toggle-container {{
     display: flex;
@@ -557,16 +557,33 @@ html = f"""
       allReady = true;
       console.log('✅ All stems ready!');
       
-      // Set initial volumes
+      // Set initial volumes explicitly for ALL stems
       const vol = parseFloat(volSlider.value);
+      console.log('Setting initial volumes to:', vol);
+      
       grooveWS.setVolume(vol);
+      console.log('Groove volume set to:', vol);
+      
       stems.lyricsA.setVolume(vol);
+      console.log('LyricsA volume set to:', vol);
+      
       stems.lyricsB.setVolume(0);
+      console.log('LyricsB volume set to: 0');
+      
       stems.lyricsC.setVolume(0);
+      console.log('LyricsC volume set to: 0');
+      
       stems.soloA.setVolume(vol);
+      console.log('SoloA volume set to:', vol);
+      
       stems.soloB.setVolume(0);
+      console.log('SoloB volume set to: 0');
+      
       stems.harmony_narrow.setVolume(vol);
+      console.log('Harmony_narrow volume set to:', vol);
+      
       stems.harmony_wide.setVolume(0);
+      console.log('Harmony_wide volume set to: 0');
       
       console.log('✅ Ready to play with sound!');
     }}
