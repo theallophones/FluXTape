@@ -136,7 +136,7 @@ html = f"""
       <div class="label-small labelLeft-small active" data-solo="A">A</div>
       <div class="label-small labelRight-small" data-solo="B">B</div>
     </div>
-    <div id="soloDisplay" class="version-badge">Solo A</div>
+    <div id="soloDisplay" class="version-badge">Take A</div>
   </div>
 
   <div class="control-section">
@@ -146,8 +146,8 @@ html = f"""
         <div id="spatializePointer" class="pointer-small"></div>
         <div class="center-dot-small"></div>
       </div>
-      <div class="label-small labelLeft-small active" data-spatialize="narrow">OFF</div>
-      <div class="label-small labelRight-small" data-spatialize="wide">ON</div>
+      <div class="label-small labelLeft-small active" data-spatialize="narrow">Narrow</div>
+      <div class="label-small labelRight-small" data-spatialize="wide">Wide</div>
     </div>
     <div id="spatializeDisplay" class="version-badge">Narrow</div>
   </div>
@@ -339,6 +339,10 @@ html = f"""
   .labelA-small {{ top: 50%; left: -20px; transform: translateY(-50%); }}
   .labelB-small {{ top: -15px; left: 50%; transform: translateX(-50%); }}
   .labelC-small {{ top: 50%; right: -20px; transform: translateY(-50%); }}
+  
+  /* For 2-option knobs (Solo, Spatialize) - left and right only */
+  .labelLeft-small {{ top: 50%; left: -25px; transform: translateY(-50%); }}
+  .labelRight-small {{ top: 50%; right: -25px; transform: translateY(-50%); }}
 
   .toggle-container {{
     display: flex;
@@ -522,13 +526,16 @@ html = f"""
   const playBtn = document.getElementById('playBtn');
   const lyricsPointer = document.getElementById('lyricsPointer');
   const lyricsLabels = Array.from(document.querySelectorAll('[data-lyrics]'));
+  const soloPointer = document.getElementById('soloPointer');
+  const soloLabels = Array.from(document.querySelectorAll('[data-solo]'));
+  const spatializePointer = document.getElementById('spatializePointer');
+  const spatializeLabels = Array.from(document.querySelectorAll('[data-spatialize]'));
   const timeDisplay = document.getElementById('time-display');
   const volSlider = document.getElementById('volumeSlider');
   const speedSelect = document.getElementById('speedSelect');
   const visualizer = document.querySelector('.visualizer-container');
   const lyricsDisplay = document.getElementById('lyricsDisplay');
   const soloDisplay = document.getElementById('soloDisplay');
-  const spatializeBtn = document.getElementById('spatializeBtn');
   const spatializeDisplay = document.getElementById('spatializeDisplay');
 
   function formatTime(sec) {{
@@ -675,35 +682,61 @@ html = f"""
   }});
 
   // Solo
-  document.querySelectorAll('[data-solo]').forEach(btn => {{
-    btn.addEventListener('click', () => {{
-      const version = btn.getAttribute('data-solo');
-      if (version === currentSolo) return;
-      
-      currentSolo = version;
-      updateVolumes();
-      
-      document.querySelectorAll('[data-solo]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      soloDisplay.textContent = 'Solo ' + version;
+  document.getElementById('soloKnob').addEventListener('click', () => {{
+    const next = currentSolo === 'A' ? 'B' : 'A';
+    switchSolo(next);
+  }});
+
+  soloLabels.forEach(el => {{
+    el.addEventListener('click', (e) => {{
+      e.stopPropagation();
+      switchSolo(el.getAttribute('data-solo'));
     }});
   }});
 
+  function switchSolo(version) {{
+    if (version === currentSolo) return;
+    
+    currentSolo = version;
+    updateVolumes();
+    
+    soloLabels.forEach(el => {{
+      el.classList.toggle('active', el.getAttribute('data-solo') === version);
+    }});
+    
+    const angle = version === 'A' ? 180 : 0;
+    soloPointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
+    soloDisplay.textContent = 'Take ' + version;
+  }}
+
   // Spatialize
-  spatializeBtn.addEventListener('click', () => {{
+  document.getElementById('spatializeKnob').addEventListener('click', () => {{
+    toggleSpatialize();
+  }});
+
+  spatializeLabels.forEach(el => {{
+    el.addEventListener('click', (e) => {{
+      e.stopPropagation();
+      const isWide = el.getAttribute('data-spatialize') === 'wide';
+      if (isWide !== spatializeOn) {{
+        toggleSpatialize();
+      }}
+    }});
+  }});
+
+  function toggleSpatialize() {{
     spatializeOn = !spatializeOn;
     updateVolumes();
     
-    if (spatializeOn) {{
-      spatializeBtn.classList.add('active');
-      spatializeBtn.textContent = 'ON';
-      spatializeDisplay.textContent = 'Wide';
-    }} else {{
-      spatializeBtn.classList.remove('active');
-      spatializeBtn.textContent = 'OFF';
-      spatializeDisplay.textContent = 'Narrow';
-    }}
-  }});
+    spatializeLabels.forEach(el => {{
+      const isWide = el.getAttribute('data-spatialize') === 'wide';
+      el.classList.toggle('active', isWide === spatializeOn);
+    }});
+    
+    const angle = spatializeOn ? 0 : 180;
+    spatializePointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
+    spatializeDisplay.textContent = spatializeOn ? 'Wide' : 'Narrow';
+  }}
 
   // Volume
   function updateSliderGradient(value) {{
@@ -784,4 +817,4 @@ html = f"""
 </script>
 """
 
-st.components.v1.html(html, height=1250)
+st.components.v1.html(html, height=1300)
