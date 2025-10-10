@@ -1,5 +1,6 @@
 import streamlit as st
-import json
+import base64
+import os
 
 st.set_page_config(layout="wide", page_title="FluXTape Complete", page_icon="🎵")
 
@@ -18,6 +19,48 @@ st.markdown("""
 footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
+
+audio_files = {
+    "groove": "groove.mp3",
+    "lyricsA": "lyricsA.mp3",
+    "lyricsB": "lyricsB.mp3",
+    "lyricsC": "lyricsC.mp3",
+    "soloA": "soloA.mp3",
+    "soloB": "soloB.mp3",
+    "harmony_narrow": "harmony_narrow.mp3",
+    "harmony_wide": "harmony_wide.mp3",
+    "adlibA": "adlibA.mp3",
+    "adlibB": "adlibB.mp3",
+    "adlibC": "adlibC.mp3",
+}
+
+def file_to_data_url(path, mime="audio/mpeg"):
+    try:
+        if not os.path.exists(path):
+            st.error(f"❌ Audio file not found: {path}")
+            return None
+        
+        file_size = os.path.getsize(path)
+        print(f"Loading {path}: {file_size / (1024*1024):.2f} MB")
+        
+        with open(path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("utf-8")
+        
+        print(f"Base64 encoded {path}: {len(b64)} characters")
+        return f"data:{mime};base64,{b64}"
+    except Exception as e:
+        st.error(f"❌ Error loading {path}: {str(e)}")
+        return None
+
+audio_map = {}
+for k, v in audio_files.items():
+    data_url = file_to_data_url(v)
+    if data_url:
+        audio_map[k] = data_url
+
+if len(audio_map) < 11:
+    st.error("❌ Not all audio files could be loaded.")
+    st.stop()
 
 html = f"""
 <div style="text-align:center; margin-bottom:10px;">
