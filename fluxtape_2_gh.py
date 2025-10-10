@@ -424,15 +424,14 @@ html = f"""
     waveColor: '#4a5568',
     progressColor: '#5f6bff',
     height: 140,
-    backend: 'WebAudio',
-    audioContext: audioContext,
+    backend: 'MediaElement',
     cursorWidth: 2,
     cursorColor: '#fff',
     barWidth: 3,
     barGap: 2,
     barRadius: 3,
     responsive: true,
-    normalize: true,
+    normalize: true
   }});
 
   function createHiddenWS() {{
@@ -442,7 +441,11 @@ html = f"""
     return WaveSurfer.create({{
       container: div,
       backend: 'WebAudio',
-      audioContext: audioContext
+      audioContext: audioContext,
+      xhr: {{
+        mode: 'cors',
+        credentials: 'omit'
+      }}
     }});
   }}
 
@@ -468,6 +471,7 @@ html = f"""
   let readyCount = 0;
 
   const playBtn = document.getElementById('playBtn');
+  const loadingStatus = document.getElementById('loadingStatus');
   const lyricsPointer = document.getElementById('lyricsPointer');
   const lyricsLabels = Array.from(document.querySelectorAll('[data-lyrics]'));
   const soloPointer = document.getElementById('soloPointer');
@@ -500,9 +504,16 @@ html = f"""
   function checkReady() {{
     readyCount++;
     console.log('Ready:', readyCount + '/11');
+    loadingStatus.textContent = 'Loading... (' + readyCount + '/11)';
+    
     if (readyCount === 11) {{
       allReady = true;
       console.log('✅ All stems ready!');
+      loadingStatus.textContent = '✅ Ready to play!';
+      loadingStatus.style.color = '#4CAF50';
+      
+      playBtn.disabled = false;
+      playBtn.style.opacity = '1';
       
       const vol = parseFloat(volSlider.value);
       
@@ -555,6 +566,13 @@ html = f"""
   }}
 
   grooveWS.load(audioMap.groove);
+  
+  grooveWS.on('error', (err) => {{
+    console.error('Groove load error:', err);
+    loadingStatus.textContent = '❌ Error loading audio. Check console.';
+    loadingStatus.style.color = '#f44336';
+  }});
+  
   grooveWS.on('ready', () => {{
     console.log('✓ Groove');
     updateTime();
@@ -568,6 +586,13 @@ html = f"""
 
   Object.keys(stems).forEach(key => {{
     stems[key].load(audioMap[key]);
+    
+    stems[key].on('error', (err) => {{
+      console.error(key + ' load error:', err);
+      loadingStatus.textContent = '❌ Error loading ' + key;
+      loadingStatus.style.color = '#f44336';
+    }});
+    
     stems[key].on('ready', () => {{
       console.log('✓', key);
       const backend = stems[key].backend;
