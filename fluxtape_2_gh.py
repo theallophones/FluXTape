@@ -36,8 +36,14 @@ def file_to_data_url(path, mime="audio/mpeg"):
         if not os.path.exists(path):
             st.error(f"❌ Audio file not found: {path}")
             return None
+        
+        file_size = os.path.getsize(path)
+        print(f"Loading {path}: {file_size / (1024*1024):.2f} MB")
+        
         with open(path, "rb") as f:
             b64 = base64.b64encode(f.read()).decode("utf-8")
+        
+        print(f"Base64 encoded {path}: {len(b64)} characters")
         return f"data:{mime};base64,{b64}"
     except Exception as e:
         st.error(f"❌ Error loading {path}: {str(e)}")
@@ -769,4 +775,4 @@ html = f"""
 </script>
 """
 
-st.components.v1.html(html, height=1200)
+st.components.v1.html(html, height=1250)
