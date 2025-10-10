@@ -474,8 +474,18 @@ html = f"""
   // Create shared audio context
   const AudioContext = window.AudioContext || window.webkitAudioContext;
   const audioContext = new AudioContext();
+  
+  // Create master gain node (master bus) where all stems will be mixed
+  const masterGain = audioContext.createGain();
+  masterGain.gain.value = 1.0;
+  masterGain.connect(audioContext.destination);
+  
+  // Create analyser for waveform visualization connected to master bus
+  const masterAnalyser = audioContext.createAnalyser();
+  masterAnalyser.fftSize = 2048;
+  masterGain.connect(masterAnalyser);
 
-  // Create groove with WaveSurfer
+  // Create groove with WaveSurfer - will show visualization from master bus
   const grooveWS = WaveSurfer.create({{
     container: '#waveform',
     waveColor: '#4a5568',
