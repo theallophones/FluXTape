@@ -21,17 +21,17 @@ footer {visibility: hidden;}
 """, unsafe_allow_html=True)
 
 audio_files = {
-    "groove": "groove.mp3",
-    "lyricsA": "lyricsA.mp3",
-    "lyricsB": "lyricsB.mp3",
-    "lyricsC": "lyricsC.mp3",
-    "soloA": "soloA.mp3",
-    "soloB": "soloB.mp3",
-    "harmony_narrow": "harmony_narrow.mp3",
-    "harmony_wide": "harmony_wide.mp3",
-    "adlibA": "adlibA.mp3",
-    "adlibB": "adlibB.mp3",
-    "adlibC": "adlibC.mp3",
+    "groove": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/groove.mp3",
+    "lyricsA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsA.mp3",
+    "lyricsB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsB.mp3",
+    "lyricsC": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/lyricsC.mp3",
+    "soloA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/soloA.mp3",
+    "soloB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/soloB.mp3",
+    "harmony_narrow": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/harmony_narrow.mp3",
+    "harmony_wide": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/harmony_wide.mp3",
+    "adlibA": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibA.mp3",
+    "adlibB": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibB.mp3",
+    "adlibC": "https://www.peymansalimi.com/wp-content/uploads/fluxtape/adlibC.mp3",
 }
 
 def file_to_data_url(path, mime="audio/mpeg"):
