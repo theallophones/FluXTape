@@ -127,7 +127,7 @@ html = f"""
   </div>
 
   <div class="control-section">
-    <div class="control-header">SOLO</div>
+    <div class="control-header">SOLO <span style="font-size:10px; font-weight:400; opacity:0.7;">(from 1:03)</span></div>
     <div class="knob-wrap-small">
       <div id="soloKnob" class="knob-small" title="Click to switch solo">
         <div id="soloPointer" class="pointer-small"></div>
@@ -591,11 +591,17 @@ html = f"""
 
   function updateVolumes() {{
     const vol = parseFloat(volSlider.value);
+    console.log('Updating volumes to:', vol, 'Current lyrics:', currentLyrics);
+    
     grooveWS.setVolume(vol);
     
     stems.lyricsA.setVolume(currentLyrics === 'A' ? vol : 0);
     stems.lyricsB.setVolume(currentLyrics === 'B' ? vol : 0);
     stems.lyricsC.setVolume(currentLyrics === 'C' ? vol : 0);
+    
+    console.log('LyricsA vol:', currentLyrics === 'A' ? vol : 0);
+    console.log('LyricsB vol:', currentLyrics === 'B' ? vol : 0);
+    console.log('LyricsC vol:', currentLyrics === 'C' ? vol : 0);
     
     stems.soloA.setVolume(currentSolo === 'A' ? vol : 0);
     stems.soloB.setVolume(currentSolo === 'B' ? vol : 0);
