@@ -341,8 +341,8 @@ html = f"""
   .labelC-small {{ top: 50%; right: -20px; transform: translateY(-50%); }}
   
   /* For 2-option knobs (Solo, Spatialize) - left and right only, matching Lyrics A and C positions */
-  .labelLeft-small {{ top: 50%; left: -30px; transform: translateY(-50%); }}
-  .labelRight-small {{ top: 50%; right: -30px; transform: translateY(-50%); }}
+  .labelLeft-small {{ top: 50%; left: -45px; transform: translateY(-50%); }}
+  .labelRight-small {{ top: 50%; right: -45px; transform: translateY(-50%); }}
 
   .toggle-container {{
     display: flex;
@@ -380,7 +380,7 @@ html = f"""
     color: #8b92a8;
     border: 2px solid #3a4150;
     border-radius: 10px;
-    padding: -5px 5px;
+    padding: 10px 24px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -704,7 +704,7 @@ html = f"""
       el.classList.toggle('active', el.getAttribute('data-solo') === version);
     }});
     
-    // Use same angles as Lyrics: A=270° (9 o'clock), C=90° (3 o'clock)
+    // 0° = 12 o'clock (noon), so: A=270° (9 o'clock left), B=90° (3 o'clock right)
     const angle = version === 'A' ? 270 : 90;
     soloPointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
     soloDisplay.textContent = 'Take ' + version;
@@ -734,7 +734,7 @@ html = f"""
       el.classList.toggle('active', isWide === spatializeOn);
     }});
     
-    // Use same angles as Lyrics: narrow=270° (9 o'clock), wide=90° (3 o'clock)
+    // 0° = 12 o'clock (noon), so: Narrow=270° (9 o'clock left), Wide=90° (3 o'clock right)
     const angle = spatializeOn ? 90 : 270;
     spatializePointer.style.transform = 'translate(-50%, 0) rotate(' + angle + 'deg)';
     spatializeDisplay.textContent = spatializeOn ? 'Wide' : 'Narrow';
