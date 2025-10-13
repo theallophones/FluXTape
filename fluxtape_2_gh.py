@@ -812,8 +812,20 @@ html = f"""
     Object.values(stems).forEach(ws => {{
       ws.setTime(Math.min(targetTime, ws.getDuration() - 0.01));
     }});
-    isSeeking = false;
-    wasPlayingBeforeSeek = false;
+    if (wasPlayingBeforeSeek) {{
+      setTimeout(() => {{
+        if (isSeeking) {{
+          console.log('Seek ended - restarting playback');
+          isSeeking = false;
+          wasPlayingBeforeSeek = false;
+          const exactTime = grooveWS.getCurrentTime();
+          console.log('Restarting all at exact time:', exactTime);
+          isPlaying = true;
+          grooveWS.play(exactTime);
+          Object.values(stems).forEach(ws => ws.play(exactTime));
+        }}
+      }}, 100);
+    }}
   }});
 
   document.addEventListener('keydown', (e) => {{
@@ -920,4 +932,4 @@ html = f"""
 </script>
 """
 
-st.components.v1.html(html, height=1900)
+st.components.v1.html(html, height=3000)
